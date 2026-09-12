@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
 WORKDIR /app
 COPY requirements.lock ./
 RUN pip install --no-cache-dir -r requirements.lock
-COPY app.py serve.py features.py vad.py provenance.py ./
+COPY app.py serve.py features.py behavior_features.py vad.py provenance.py ./
 COPY artifacts/model.joblib artifacts/model.joblib
 USER 10001:10001
 EXPOSE 8000

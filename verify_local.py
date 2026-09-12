@@ -32,14 +32,16 @@ def main():
     parser.add_argument("--python", default=sys.executable, help="Service Python; use a fresh environment to check dependencies")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--report-prefix", default="phase2")
+    parser.add_argument("--model", type=Path, default=Path("artifacts/model.joblib"))
+    parser.add_argument("--offline", type=Path, default=Path("reports/phase1_predictions_val.csv"))
     args = parser.parse_args()
     url = f"http://127.0.0.1:{args.port}"
-    env = {**os.environ, "PORT": str(args.port), "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
+    env = {**os.environ, "MODEL_PATH": str(args.model.resolve()), "PORT": str(args.port), "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"}
     process = subprocess.Popen([args.python, "serve.py"], env=env)
     try:
         wait_for_health(url, process)
-        evaluate_http(url, output=Path(f"reports/{args.report_prefix}_http.json"))
-        check_endpoint(url, output=Path(f"reports/{args.report_prefix}_edges.json"))
+        evaluate_http(url, output=Path(f"reports/{args.report_prefix}_http.json"), offline=args.offline)
+        check_endpoint(url, model_path=args.model, output=Path(f"reports/{args.report_prefix}_edges.json"))
     finally:
         process.terminate()
         try:

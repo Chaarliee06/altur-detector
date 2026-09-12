@@ -166,3 +166,10 @@ el endpoint corre.
 3. Corre en CPU en milisegundos, sin GPU, sin enrolamiento previo, sin guardar biometría de voz. Un banco lo despliega sobre su audio actual.
 4. Decide con 88% de acierto a los 30 segundos de llamada. Sirve en tiempo real, no solo forense.
 5. Esto es lo que pasa si el motor sintético se vuelve más rápido, y esto es lo que lo mitiga.
+
+
+## Instrucción posterior del usuario: evaluación pública y bloques temporales
+
+El servicio público es https://altur-detector.onrender.com. El usuario autorizó expresamente evaluar las 71 llamadas de val contra esa URL HTTPS, despertando primero /health. Esta petición habilita ese envío al servicio del equipo; el entrenamiento y los experimentos permanecen locales. Docker sigue aplazado. La puerta de Fase 2 se cierra al reproducir el 92.96% local por HTTPS, sin exigir la comprobación Docker ni el soak anterior de 900 segundos.
+
+La Fase 3 de este incremento es temporal: recuperación de interrupción, recuperación de silencio, consistencia, deriva y autocorrelación. Evaluar los bloques por separado con el VAD congelado y el mismo endpoint; dejar fuera los que no mejoren accuracy. Después simular latencias sintéticas menores en 1.0 y 1.5 segundos, actualizar RESULTS.md y hacer push. Semántica, acústica y demo no forman parte de este incremento.

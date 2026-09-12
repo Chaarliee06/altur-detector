@@ -1,0 +1,35 @@
+{
+  "n": 71,
+  "correct": 69,
+  "accuracy": 0.971830985915493,
+  "auc": 0.9904610492845787,
+  "eer": 0.05405405405405406,
+  "eer_legacy": 0.05405405405405406,
+  "brier": 0.03062651874960819,
+  "confusion_matrix": [
+    [
+      35,
+      2
+    ],
+    [
+      0,
+      34
+    ]
+  ],
+  "transport": "HTTP loopback",
+  "url": "http://127.0.0.1:8002",
+  "started_at_utc": "2026-09-12T05:24:57.983567+00:00",
+  "completed_at_utc": "2026-09-12T05:25:02.554227+00:00",
+  "health_latency_ms": 1.1876109992954298,
+  "http_successes": 71,
+  "http_errors": 0,
+  "detect_retries": 0,
+  "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+  "pipeline_sha256": "1c3242d4c2ddb85b58f32ae9a939a6c87d0ac4002c306b1d0c2f98c98157b51a",
+  "abstentions": 0,
+  "latency_p50_ms": 52.38056100006361,
+  "latency_p95_ms": 88.6121040002763,
+  "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+  "max_probability_delta_offline": 1.4338573731120796e-16,
+  "offline_equivalent": true
+}

@@ -1,20 +1,16 @@
 # Altur: detector de comportamiento conversacional
 
-`POST /detect` clasifica al **llamante** de una llamada telefónica como humano o sintético. Usa el canal 1 para contextualizar las respuestas del canal 0. Extrae turnos del WAV con un VAD por energía y aplica el baseline de 58 variables temporales con HistGradientBoosting.
+`POST /detect` clasifica al llamante como humano o sintético a partir de un WAV estéreo de 8 kHz: canal 0 llamante, canal 1 agente. Extrae turnos con un VAD congelado y usa HistGradientBoosting, sin GPU ni servicios de inferencia externos.
 
-**Estado:** Fase 1 aprobada. Fase 2 validada por HTTP local; falta verificar el despliegue público. Docker queda aplazado por indicación del usuario y no bloquea esta fase. Las fases 3–6 no se han iniciado porque la segunda puerta sigue cerrada. Métricas y alcance: [RESULTS.md](RESULTS.md).
+**Fase 2 cerrada:** las 71 llamadas de val contra [Render](https://altur-detector.onrender.com) dieron **66/71 (92.96%)**, AUC **0.9849**, Brier **0.0453** y latencias externas **p50 586.69 ms / p95 839.89 ms**. Cero errores y probabilidades equivalentes al baseline local.
 
-Código del equipo: [Chaarliee06/altur-detector](https://github.com/Chaarliee06/altur-detector). El repositorio conserva acceso privado.
+**Fase 3:** se probaron cinco bloques por separado y una combinación. El artefacto seleccionado añade únicamente respuesta al silencio: **69/71 (97.18%)**, AUC **0.9905**, Brier **0.0306**, verificado por el mismo endpoint en HTTP local. Tiene 67 features: 58 originales y nueve nuevas. `artifacts/baseline_model.joblib` conserva el baseline público; `artifacts/model.joblib` contiene el seleccionado. La evaluación pública registrada corresponde al baseline, y la del seleccionado corresponde a HTTP local.
 
-## Resultado comprobado
+**Limitación medida:** el seleccionado cae a **63.38%** al adelantar 1.5 s todos los turnos sintéticos y recalcular las señales. La mejora en val no demuestra robustez frente a motores más rápidos. Las tablas completas, definiciones y decisiones están en [RESULTS.md](RESULTS.md).
 
-En las 71 llamadas de val, con hablantes separados de train: **66/71 correctas (92.96%)**, AUC **0.9849**, EER **0.0541**, Brier **0.0453**. El endpoint reproduce las probabilidades offline dentro de `1.33e-16`. Ninguna llamada completa de val produjo abstención.
+## Servir el modelo
 
-La selección del VAD se hizo con 540 configuraciones y solo correlaciones de train. `lat_med` pasó de r=0.8587 a **0.9477**. No se usaron etiquetas de val para elegir parámetros ni se entrenó el clasificador con val.
-
-## Ejecutar el modelo entregado
-
-Requiere Python 3.12. Para reproducir la malla, usar Linux o WSL: `phase1.py` utiliza procesos `fork`. El modelo entregado permite servir sin descargar el dataset.
+Python 3.12, sin descargar el dataset para inferencia:
 
 ```bash
 python3 -m venv .venv
@@ -22,7 +18,11 @@ python3 -m venv .venv
 .venv/bin/python serve.py
 ```
 
-El servicio escucha en `0.0.0.0:8000`; respeta `PORT` cuando lo proporciona el host. `GET /health` devuelve disponibilidad y los SHA-256 del modelo y del código de inferencia con sus dependencias. No requiere GPU ni servicios de inferencia externos.
+Escucha en `0.0.0.0:8000` y respeta `PORT`. `/health` devuelve los SHA-256 del modelo y del código de inferencia, el número de features y los bloques activos. Para servir otro artefacto propio:
+
+```bash
+MODEL_PATH=artifacts/baseline_model.joblib .venv/bin/python serve.py
+```
 
 Petición:
 
@@ -36,100 +36,67 @@ Respuesta:
 {"is_synthetic": true, "confidence": 0.87}
 ```
 
-`confidence` es la probabilidad de **la clase devuelta**, conservando el contrato del baseline adjunto. Para AUC/Brier se recupera `P(synthetic)` como `confidence` si el veredicto es `true`, o `1-confidence` si es `false`. No se redondean probabilidades. La calibración adicional corresponde a la Fase 5 y sigue pendiente.
+`confidence` es la probabilidad de la clase devuelta. AUC/Brier usan `confidence` si el veredicto es sintético y `1-confidence` en caso contrario. Las probabilidades no se redondean; la calibración adicional sigue pendiente.
 
-Audio mono, duración menor de 3 segundos, silencio y menos de cuatro turnos útiles devuelven `{"is_synthetic": false, "confidence": 0.5}`. A confianza 0.5, el bool es un valor exigido por el contrato y **no constituye un veredicto humano**. WAV corrupto, frecuencia distinta de 8 kHz y formato distinto de estéreo PCM16 producen 422. Hay límites de 32 MiB y 900 segundos. El audio se procesa en memoria, sin almacenarlo ni incluirlo en errores de validación.
-
-Ejemplo local con un WAV propio:
-
-```bash
-.venv/bin/python - <<'PY'
-import base64, json, urllib.request
-from pathlib import Path
-payload = json.dumps({"audio": base64.b64encode(Path("llamada.wav").read_bytes()).decode()}).encode()
-request = urllib.request.Request("http://127.0.0.1:8000/detect", data=payload,
-                                 headers={"Content-Type": "application/json"})
-print(urllib.request.urlopen(request, timeout=60).read().decode())
-PY
-```
+Mono, audio menor de 3 segundos, silencio y menos de cuatro turnos útiles devuelven `{"is_synthetic": false, "confidence": 0.5}`. A 0.5 hay abstención: el bool es un valor requerido por el contrato. WAV corrupto, frecuencia incompatible y formato distinto de estéreo PCM16 producen 422. Límites: 32 MiB y 900 segundos. El audio se procesa en memoria y no se refleja en errores.
 
 ## Reproducir por puertas
 
 ```bash
-make all PUBLIC_URL=https://TU-SERVICIO.onrender.com
+make all PUBLIC_URL=https://altur-detector.onrender.com
 ```
 
-`make all` instala dependencias, descarga la versión oficial fijada con comprobación SHA-256, ejecuta la búsqueda de Fase 1, prueba HTTP local y verifica 15 minutos el despliegue público. Se detiene con error en la primera puerta incumplida. **No despliega ni contrata recursos automáticamente y no afirma ejecutar las fases 3–6, todavía pendientes.** Docker se omite por indicación del usuario. Sin una URL pública verificada, la Fase 2 permanece pendiente.
+Instala dependencias, descarga/verifica los datos fijados, ejecuta la malla de Fase 1, verifica baseline local y público, mide los bloques de Fase 3 y ejecuta estrés. Se detiene ante una puerta fallida. Linux/WSL es necesario para la búsqueda con procesos `fork`. Docker queda aplazado por indicación del usuario.
 
-Para repetir solo lo que ya se puede ejecutar:
+La evaluación pública de Fase 2 compara con el baseline. Si el host ya sirve otro modelo, se detiene al detectar la diferencia; no cambia el despliegue automáticamente. Tras el cierre público ya registrado se pueden repetir los experimentos con:
 
 ```bash
-make install
-make data
-make phase1
-make phase2-local
+make phase3 stress
 ```
 
-`make data` descarga aproximadamente 671 MB de audio a la máquina local, además de los metadatos del repo oficial. El ZIP de este proyecto no contiene el dataset. Si ya están `audio/`, `turns/` y `manifest.csv`, los reutiliza tras verificar el manifiesto.
-
-Para evaluar una instancia local ya levantada:
+Para evaluar directamente el baseline público:
 
 ```bash
-.venv/bin/python evaluate_http.py --url http://127.0.0.1:8000
+.venv/bin/python evaluate_http.py \
+  --url https://altur-detector.onrender.com \
+  --allow-remote \
+  --output reports/phase2_public_http.json
 ```
 
-El evaluador corre las 71 llamadas, guarda sus predicciones localmente y reporta accuracy, AUC, EER interpolado, Brier y p50/p95. Falla si difiere del resultado offline. EER legado se conserva como columna separada para comparar con el script original.
+`--allow-remote` permite el envío HTTPS solicitado por el usuario a su servicio. Sin esa opción el evaluador acepta únicamente HTTP loopback. No sigue redirecciones. Los audios, predicciones por llamada y cachés siguen fuera de Git.
 
-## Despliegue en Render con Python
-
-`render.yaml` configura Python 3.12, instala `requirements.lock`, arranca con `python serve.py` y comprueba `/health`. Usa el modelo ya entrenado que está en `artifacts/model.joblib`; no ejecuta entrenamiento ni descarga datos en Render. `.python-version` fija la rama Python 3.12 conforme a la [configuración oficial de Python en Render](https://render.com/docs/python-version).
-
-[Crear el servicio desde el Blueprint del repositorio](https://dashboard.render.com/blueprint/new?repo=https://github.com/Chaarliee06/altur-detector)
-
-En Render, seleccionar el repositorio privado, permitir su acceso si se solicita y aplicar el Blueprint. La configuración usa el plan gratuito y no solicita secretos de aplicación. El plan gratuito se suspende tras 15 minutos sin tráfico: abrir `/health` y completar la verificación antes del benchmark. La prueba de disponibilidad solo respalda los 900 segundos efectivamente comprobados. [Comportamiento del plan gratuito](https://render.com/docs/free).
-
-Los despliegues automáticos por commit están desactivados para controlar cuándo se cambia el modelo que sirve al jurado. Después de actualizar el código o modelo, desplegar el commit validado y volver a comprobarlo.
-
-Tras publicar:
+Para verificar el modelo seleccionado y sus bordes:
 
 ```bash
-make phase2-public PUBLIC_URL=https://TU-SERVICIO.onrender.com
+.venv/bin/python verify_selected.py
 ```
 
-La restricción de mantener el audio local impide mandar las llamadas de val al host público. La métrica se comprueba por HTTP local; el host público se comprueba con tonos generados, contrato, SHA-256 del modelo y del código, y disponibilidad durante 900 segundos. No presentar ese chequeo público como una evaluación remota de las 71 llamadas.
-
-## Docker: aplazado
-
-Los archivos permanecen preparados para retomarlos después. Docker no forma parte de `make all` ni de la puerta pública actual.
+Para evaluarlo por HTTPS después de desplegarlo, usar como comparación offline las predicciones de la variante seleccionada:
 
 ```bash
-docker build -t altur-detector .
-docker run --rm -p 8000:8000 altur-detector
+.venv/bin/python evaluate_http.py \
+  --url https://altur-detector.onrender.com \
+  --allow-remote \
+  --offline reports/phase3_silence_recovery_offline.csv \
+  --output reports/phase3_public_http.json
 ```
 
-La imagen incluye únicamente el código de inferencia, dependencias fijadas y `artifacts/model.joblib`; ejecuta con UID sin privilegios. `make phase2-docker` levanta esa imagen en el puerto local 8001 y ejecuta la evaluación completa sin montar el dataset dentro del contenedor. La presencia del Dockerfile no equivale a haber superado esa comprobación.
+El CSV se genera localmente al ejecutar `phase3.py`; no se distribuye. La prueba HTTP en entorno limpio se ejecutó con un servidor que tenía únicamente `requirements.lock` instalado. Para repetirla, crear ese entorno y pasarlo mediante `verify_selected.py --python /ruta/al/entorno/bin/python`.
 
-Respaldo previsto, si ngrok ya está instalado y autenticado en la máquina del equipo:
+## Qué se midió
 
-```bash
-ngrok http 8000
-```
+- El VAD se seleccionó entre 540 configuraciones usando solo correlaciones de train. `lat_med` obtuvo Pearson **0.9477** en train.
+- Clasificador ajustado exclusivamente con 282 llamadas de train. Las 71 de val respetan el split oficial por hablante. No se hizo CV aleatoria sin IDs de hablante.
+- Bloques nuevos: recuperación tras interrupción, respuesta al silencio, consistencia, deriva y autocorrelación. Solo se aceptan aumentos estrictos de accuracy; combinar consistencia con silencio no añadió aciertos.
+- Misma extracción en memoria al entrenar y servir. Leer floats de un CSV para el experimento provocó una discrepancia en un umbral de árbol; se corrigió y repitió toda la ablación.
+- Estrés con modelos congelados: reducción de latencias y desplazamiento completo de turnos, manteniendo intactas las llamadas humanas. Ninguno representa una evaluación de audio real de un motor nuevo.
 
-Su uso como respaldo no sustituye la prueba de estabilidad del host.
+Val también se utiliza para seleccionar bloques: el 97.18% es exploratorio y requiere confirmación independiente. No se midieron todavía semántica, acústica, clips cortos, ruido/ganancia, calibración adicional ni demo.
 
-## Qué se conservó del baseline
+## Render y modelo publicado
 
-- Las 58 variables predictoras originales; el CSV suma 61 columnas al incluir `anon_id`, `label`, `split`.
-- El mismo clasificador y sus hiperparámetros. Únicamente cambió la segmentación a la configuración validada por malla.
-- El manejo nativo de NaN de HGB, idéntico al entrenamiento, sin imputación distinta al servir.
-- `baseline_original/` conserva los cuatro archivos recibidos para auditoría. **No ejecutar su `train.py`: el original termina ajustando sobre train+val.** El entrenamiento de este proyecto usa exclusivamente train.
+`render.yaml` configura runtime Python, dependencias fijadas, `python serve.py`, `/health` y el artefacto incluido. No entrena ni descarga datos en Render. Los despliegues automáticos están desactivados en ese Blueprint; aplicar un commit nuevo al servicio requiere desplegarlo y verificar `/health` y las 71 llamadas contra el artefacto correspondiente. La configuración efectiva del servicio creado desde el Dashboard puede diferir del Blueprint.
 
-No hay identificadores de hablante disponibles para construir folds nuevos: solo se usa la separación oficial train/val y no se publican resultados de CV aleatoria como evidencia de generalización a hablantes nuevos.
+El plan gratuito puede suspender la instancia: llamar primero a `/health`. Los percentiles registrados excluyen ese chequeo previo. [Documentación de Render](https://render.com/docs/free).
 
-## Guion provisional de 60 segundos
-
-“Detectamos la dinámica de la conversación: cómo responde el llamante al agente, sus pausas, interrupciones y solapamientos. Primero comprobamos que esas señales pueden extraerse del WAV que recibirá el jurado: la latencia mediana obtenida por VAD correlaciona 0.948 con la referencia. Con el modelo entrenado únicamente sobre esos turnos de audio acertamos 66 de 71 llamadas de hablantes separados del entrenamiento. El endpoint reproduce exactamente esa evaluación. El siguiente paso obligatorio es demostrar la disponibilidad pública del servicio.”
-
-No afirmar todavía robustez a todos los motores desconocidos, acierto a 30 segundos, eficacia ante sintéticos acelerados ni mejora por semántica: esas pruebas corresponden a fases posteriores. La independencia de identidad acústica es una hipótesis de diseño, no una garantía demostrada sobre el set oculto.
-
-Datos y condiciones: [repo oficial](https://github.com/alturio/hackmty26), [release v1.0](https://github.com/alturio/hackmty26/releases/tag/v1.0). Uso exclusivo HackMTY 2026; no redistribuir el dataset ni intentar identificar participantes.
+Código: [Chaarliee06/altur-detector](https://github.com/Chaarliee06/altur-detector). Datos y condiciones: [repo oficial](https://github.com/alturio/hackmty26), [release v1.0](https://github.com/alturio/hackmty26/releases/tag/v1.0). Uso exclusivo HackMTY 2026; no redistribuir el dataset ni intentar identificar participantes. `baseline_original/` conserva los archivos recibidos; su script de entrenamiento original no debe ejecutarse porque ajustaba también con val.

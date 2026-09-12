@@ -1,0 +1,111 @@
+{
+  "url": "http://127.0.0.1:8002",
+  "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+  "passed": true,
+  "pipeline_sha256": "1c3242d4c2ddb85b58f32ae9a939a6c87d0ac4002c306b1d0c2f98c98157b51a",
+  "n": 17,
+  "audio_source": "Generated zeros/tones; no challenge audio",
+  "checks": [
+    {
+      "case": "stereo_silence",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 3.699430999404285
+    },
+    {
+      "case": "mono",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 2.134168999873509
+    },
+    {
+      "case": "short_stereo",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 1.17395100005524
+    },
+    {
+      "case": "empty_valid_wav",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 0.9442250002393848
+    },
+    {
+      "case": "fewer_than_four_turns",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 3.9361079998343484
+    },
+    {
+      "case": "caller_only",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 3.501812999274989
+    },
+    {
+      "case": "invalid_base64",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 0.8489100000588223
+    },
+    {
+      "case": "not_wav",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 0.7289689992830972
+    },
+    {
+      "case": "truncated_wav",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 0.7643230001121992
+    },
+    {
+      "case": "wrong_sample_rate",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 4.342500999882759
+    },
+    {
+      "case": "wrong_sample_width",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 3.515023000545625
+    },
+    {
+      "case": "three_channels",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 4.999206000320555
+    },
+    {
+      "case": "wrong_format_field",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 0.7106820003173198
+    },
+    {
+      "case": "missing_audio",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 0.7439420005539432
+    },
+    {
+      "case": "null_audio",
+      "status": 422,
+      "passed": true,
+      "latency_ms": 0.6014079999658861
+    },
+    {
+      "case": "generated_multiturn",
+      "status": 200,
+      "passed": true,
+      "latency_ms": 6.410169999981008
+    },
+    {
+      "case": "malformed_json",
+      "status": 422,
+      "passed": true
+    }
+  ]
+}

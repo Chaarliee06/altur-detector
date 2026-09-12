@@ -61,7 +61,7 @@ def check_endpoint(url, model_path=Path("artifacts/model.joblib"),
         model_hash = health.json()["model_sha256"]
         expected_hash = hashlib.sha256(model_path.read_bytes()).hexdigest()
         assert model_hash == expected_hash, "Deployed artifact differs from the evaluated local model"
-        assert health.json()["pipeline_sha256"] == pipeline_fingerprint(), "Deployed inference code or dependencies differ from the local pipeline"
+        assert health.json()["pipeline_sha256"] == pipeline_fingerprint(model_path=model_path), "Deployed inference code or dependencies differ from the local pipeline"
         for name, body, expected_status, abstention in cases:
             start = time.perf_counter()
             result = client.post("/detect", json=body)
@@ -79,7 +79,7 @@ def check_endpoint(url, model_path=Path("artifacts/model.joblib"),
         records.append({"case": "malformed_json", "status": 422, "passed": True})
         assert client.get("/health").json()["ok"] is True
     report = {"url": url, "model_sha256": model_hash, "passed": True,
-              "pipeline_sha256": pipeline_fingerprint(),
+              "pipeline_sha256": pipeline_fingerprint(model_path=model_path),
               "n": len(records), "audio_source": "Generated zeros/tones; no challenge audio", "checks": records}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n")

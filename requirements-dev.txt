@@ -1,3 +1,4 @@
 -r requirements.lock
 pandas==2.2.3
 httpx==0.28.1
+socksio==1.0.0

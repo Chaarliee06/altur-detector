@@ -1,10 +1,11 @@
 """Evaluate the official val split via the same POST /detect used by judging.
 
-Dataset audio may only go to loopback. For a Docker service, publish its port
-locally. Public deployment smoke checks use generated, non-dataset audio.
+Loopback is the default. --allow-remote explicitly enables the public HTTPS
+evaluation requested by the dataset user; redirects remain disabled.
 """
 import argparse
 import base64
+from datetime import datetime, timezone
 import ipaddress
 import json
 from pathlib import Path
@@ -27,16 +28,35 @@ def require_local_url(url):
         raise ValueError("Dataset evaluation requires a numeric HTTP loopback address; audio must stay local")
 
 
+def validate_url(url, allow_remote=False):
+    if not allow_remote:
+        require_local_url(url)
+        return "HTTP loopback"
+    parsed = urlparse(url)
+    if (parsed.scheme != "https" or not parsed.hostname or parsed.username or
+            parsed.password or parsed.query or parsed.fragment or parsed.path not in ("", "/")):
+        raise ValueError("Remote evaluation requires a plain HTTPS origin without credentials or redirects")
+    return "HTTPS public"
+
+
 def evaluate_http(url, data_dir=Path("."), output=Path("reports/phase2_http.json"),
-                  offline=Path("reports/phase1_predictions_val.csv")):
-    require_local_url(url)
+                  offline=Path("reports/phase1_predictions_val.csv"), allow_remote=False):
+    transport = validate_url(url, allow_remote)
+    started_at = datetime.now(timezone.utc).isoformat()
+    if offline and not offline.exists():
+        raise FileNotFoundError(f"Offline comparison is required: {offline}")
     manifest = pd.read_csv(data_dir / "manifest.csv")
     val = manifest.loc[manifest.split == "val"].copy()
     assert len(val) == 71 and val.anon_id.is_unique
     rows = []
-    with httpx.Client(base_url=url.rstrip("/"), timeout=60, trust_env=False, follow_redirects=False) as client:
+    with httpx.Client(base_url=url.rstrip("/"), timeout=httpx.Timeout(120, connect=30),
+                      trust_env=allow_remote, follow_redirects=False) as client:
+        health_start = time.perf_counter()
         health = client.get("/health")
         health.raise_for_status()
+        health_elapsed = time.perf_counter() - health_start
+        assert health.json().get("ok") is True
+        print(f"Health OK ({health_elapsed:.3f}s); evaluating {transport}: {url}", flush=True)
         for item in val.itertuples():
             audio = base64.b64encode((data_dir / "audio" / f"{item.anon_id}.wav").read_bytes()).decode("ascii")
             start = time.perf_counter()
@@ -55,13 +75,17 @@ def evaluate_http(url, data_dir=Path("."), output=Path("reports/phase2_http.json
                 print(f"HTTP val: {len(rows)}/71", flush=True)
     frame = pd.DataFrame(rows)
     scores = evaluate((frame.label == "synthetic").astype(int), frame.p_synthetic)
-    scores.update({"transport": "HTTP loopback", "model_sha256": health.json()["model_sha256"],
+    scores.update({"transport": transport, "url": url.rstrip("/"), "started_at_utc": started_at,
+                   "completed_at_utc": datetime.now(timezone.utc).isoformat(),
+                   "health_latency_ms": health_elapsed * 1000,
+                   "http_successes": len(rows), "http_errors": 0, "detect_retries": 0,
+                   "model_sha256": health.json()["model_sha256"],
                    "pipeline_sha256": health.json()["pipeline_sha256"],
                    "abstentions": int((frame.confidence == 0.5).sum()),
                    "latency_p50_ms": float(frame.latency_s.quantile(0.5) * 1000),
                    "latency_p95_ms": float(frame.latency_s.quantile(0.95) * 1000),
                    "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64"})
-    if offline and offline.exists():
+    if offline:
         reference = pd.read_csv(offline)
         joined = frame.merge(reference[["anon_id", "p_synthetic"]], on="anon_id", validate="one_to_one", suffixes=("", "_offline"))
         assert len(joined) == 71
@@ -83,5 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--data-dir", type=Path, default=Path("."))
     parser.add_argument("--output", type=Path, default=Path("reports/phase2_http.json"))
     parser.add_argument("--offline", type=Path, default=Path("reports/phase1_predictions_val.csv"))
+    parser.add_argument("--allow-remote", action="store_true",
+                        help="Explicitly permit sending val audio to the supplied HTTPS origin")
     args = parser.parse_args()
-    evaluate_http(args.url, args.data_dir, args.output, args.offline)
+    evaluate_http(args.url, args.data_dir, args.output, args.offline, args.allow_remote)

@@ -3,7 +3,7 @@ PY := .venv/bin/python
 WORKERS ?= 6
 PUBLIC_URL ?=
 
-.PHONY: all install data phase1 phase2-local phase2-docker phase2-public serve
+.PHONY: all install data phase1 phase2-local phase2-docker phase2-public phase3 stress serve
 
 # Sequential recursive calls keep the gates ordered, even with make -j.
 all:
@@ -12,7 +12,9 @@ all:
 	$(MAKE) phase1
 	$(MAKE) phase2-local
 	$(MAKE) phase2-public
-	@echo "Phases 1 and 2 verified. Docker deferred by user; phases 3–6 remain unimplemented."
+	$(MAKE) phase3
+	$(MAKE) stress
+	@echo "Public baseline, behavior ablations and latency stress reproduced. Docker deferred."
 
 install:
 	$(PYTHON) -m venv .venv
@@ -27,7 +29,7 @@ phase1:
 
 phase2-local:
 	$(PY) -c 'import json; assert json.load(open("reports/phase1.json"))["gate"]["passed"], "Phase 1 gate failed"'
-	$(PY) -u verify_local.py
+	$(PY) -u verify_local.py --model artifacts/baseline_model.joblib
 	$(PY) write_results.py
 
 phase2-docker:
@@ -36,7 +38,17 @@ phase2-docker:
 
 phase2-public:
 	@test -n "$(PUBLIC_URL)" || (echo "Phase 2 blocked: set PUBLIC_URL to the deployed HTTPS endpoint"; exit 2)
-	$(PY) -u verify_public.py --url "$(PUBLIC_URL)"
+	$(PY) -u evaluate_http.py --url "$(PUBLIC_URL)" --allow-remote --output reports/phase2_public_http.json
+	$(PY) write_results.py
+
+phase3:
+	$(PY) -m unittest -v test_behavior
+	$(PY) -u phase3.py --workers $(WORKERS)
+	$(PY) -u verify_selected.py
+	$(PY) write_results.py
+
+stress:
+	$(PY) -u stress_latency.py
 	$(PY) write_results.py
 
 serve:

@@ -11,11 +11,14 @@ ROOT_FILES = [
     "features.py", "vad.py", "train.py", "metrics.py", "phase1.py", "app.py", "serve.py",
     "evaluate_http.py", "check_endpoint.py", "verify_local.py", "verify_docker.py",
     "verify_public.py", "prepare_data.py", "write_results.py", "package_project.py",
+    "behavior_features.py", "phase3.py", "stress_latency.py", "test_behavior.py", "verify_selected.py",
 ]
 REPORTS = [
     "phase1.json", "phase1_preparation.json", "phase2_http.json", "phase2_edges.json",
     "phase2_clean_http.json", "phase2_clean_edges.json", "phase2_docker.json",
     "phase2_public.json", "phase2_public_edges.json",
+    "phase2_public_http.json", "phase3.json", "phase3_final_http.json",
+    "phase3_final_clean_http.json", "phase3_final_edges.json", "stress_latency.json",
     "default_vad_correlations_train.csv", "vad_correlations_train.csv",
     "vad_correlations_val.csv", "vad_grid_train.csv",
 ]
@@ -24,7 +27,7 @@ REPORTS = [
 def main():
     files = [Path(name) for name in ROOT_FILES]
     files += [Path("baseline_original") / name for name in ("features.py", "vad.py", "train.py", "app.py")]
-    files += [Path("artifacts/model.joblib"), Path("artifacts/vad_config.json")]
+    files += [Path("artifacts/model.joblib"), Path("artifacts/baseline_model.joblib"), Path("artifacts/vad_config.json")]
     files += [Path("reports") / name for name in REPORTS if (Path("reports") / name).is_file()]
     checksums = {}
     for path in files:

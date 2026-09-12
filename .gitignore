@@ -13,6 +13,7 @@ reports/*.json
 *.zip
 .env
 !artifacts/model.joblib
+!artifacts/baseline_model.joblib
 !artifacts/vad_config.json
 !reports/phase1.json
 !reports/phase1_preparation.json
@@ -22,6 +23,12 @@ reports/*.json
 !reports/phase2_clean_edges.json
 !reports/phase2_public.json
 !reports/phase2_public_edges.json
+!reports/phase2_public_http.json
+!reports/phase3.json
+!reports/phase3_final_http.json
+!reports/phase3_final_clean_http.json
+!reports/phase3_final_edges.json
+!reports/stress_latency.json
 !reports/default_vad_correlations_train.csv
 !reports/vad_correlations_train.csv
 !reports/vad_correlations_val.csv

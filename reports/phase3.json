@@ -1,0 +1,556 @@
+{
+  "phase2_passed": true,
+  "phase2_public_model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69",
+  "data": {
+    "train": 282,
+    "val": 71,
+    "split": "Official speaker-disjoint train/val; no random CV"
+  },
+  "vad_config": {
+    "frame_ms": 30,
+    "thresh_db": -46.0,
+    "min_speech": 0.1,
+    "min_sil": 0.2,
+    "noise_margin": 18.0
+  },
+  "vad_cache": "cache/vad_turns_5637515e6c43571e",
+  "baseline": {
+    "n": 71,
+    "correct": 66,
+    "accuracy": 0.9295774647887324,
+    "auc": 0.9848966613672496,
+    "eer": 0.05405405405405406,
+    "eer_legacy": 0.05405405405405406,
+    "brier": 0.04528359740899822,
+    "confusion_matrix": [
+      [
+        33,
+        4
+      ],
+      [
+        1,
+        33
+      ]
+    ],
+    "transport": "HTTP loopback",
+    "url": "http://127.0.0.1:8002",
+    "started_at_utc": "2026-09-12T05:17:10.752274+00:00",
+    "completed_at_utc": "2026-09-12T05:17:15.196495+00:00",
+    "health_latency_ms": 1.1909770000784192,
+    "http_successes": 71,
+    "http_errors": 0,
+    "detect_retries": 0,
+    "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69",
+    "pipeline_sha256": "2b577504e0d0841b876f61e8f16233ffbfcf2ae4e2822bd5423ba7cae71fb650",
+    "abstentions": 0,
+    "latency_p50_ms": 51.01333900074678,
+    "latency_p95_ms": 90.18675800007259,
+    "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+    "max_probability_delta_offline": 1.3270634591222574e-16,
+    "offline_equivalent": true
+  },
+  "selection_rule": "Fixed HGB and VAD. Five single-block ablations; strict accuracy improvement. Ties favor fewer features, then AUC/Brier. Forward add individually passing blocks only when accuracy rises again.",
+  "validation_note": "Val is reused for block selection, so selected gains are exploratory; there is no independent hidden-set estimate.",
+  "ablations": [
+    {
+      "name": "interruption_recovery",
+      "blocks": [
+        "interruption_recovery"
+      ],
+      "features": 68,
+      "added_features": 10,
+      "feature_names_added": [
+        "recovery_stop_within_05",
+        "recovery_stop_within_10",
+        "recovery_stop_before_agent_end",
+        "recovery_resume_observable_rate",
+        "recovery_resume_rate",
+        "recovery_resume_wait_med",
+        "recovery_resume_wait_p90",
+        "recovery_resume_from_agent_end_med",
+        "recovery_resume_from_agent_end_p90",
+        "recovery_resume_duration_med"
+      ],
+      "offline": {
+        "n": 71,
+        "correct": 66,
+        "accuracy": 0.9295774647887324,
+        "auc": 0.985691573926868,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.0434881488435347,
+        "confusion_matrix": [
+          [
+            33,
+            4
+          ],
+          [
+            1,
+            33
+          ]
+        ]
+      },
+      "http": {
+        "n": 71,
+        "correct": 66,
+        "accuracy": 0.9295774647887324,
+        "auc": 0.985691573926868,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.0434881488435347,
+        "confusion_matrix": [
+          [
+            33,
+            4
+          ],
+          [
+            1,
+            33
+          ]
+        ],
+        "transport": "HTTP loopback",
+        "url": "http://127.0.0.1:8002",
+        "started_at_utc": "2026-09-12T05:17:16.878622+00:00",
+        "completed_at_utc": "2026-09-12T05:17:21.254843+00:00",
+        "health_latency_ms": 1.106939999772294,
+        "http_successes": 71,
+        "http_errors": 0,
+        "detect_retries": 0,
+        "model_sha256": "1c3cba6c2135ad2a6147982043414d8c48bb2a49cd5a3a6e02d3c3fc329dfc3f",
+        "pipeline_sha256": "279a947bb53a2305a4f983e4524ce748d14af29d5e0fc40fa815bc70f081ab0a",
+        "abstentions": 0,
+        "latency_p50_ms": 50.107125000067754,
+        "latency_p95_ms": 89.30550300055984,
+        "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+        "max_probability_delta_offline": 1.3704315460216776e-16,
+        "offline_equivalent": true
+      },
+      "delta_accuracy_pp": 0.0,
+      "improves_baseline": false,
+      "model_path": "artifacts/experiments/interruption_recovery.joblib",
+      "selected_final": false
+    },
+    {
+      "name": "silence_recovery",
+      "blocks": [
+        "silence_recovery"
+      ],
+      "features": 67,
+      "added_features": 9,
+      "feature_names_added": [
+        "silence_fill_wait_med",
+        "silence_fill_wait_p90",
+        "silence_fill_wait_std",
+        "silence_fill_duration_med",
+        "silence_fill_duration_p90",
+        "silence_fill_duration_std",
+        "silence_fill_whole_turn_med",
+        "silence_wait_fraction_med",
+        "silence_occupied_fraction_med"
+      ],
+      "offline": {
+        "n": 71,
+        "correct": 69,
+        "accuracy": 0.971830985915493,
+        "auc": 0.9904610492845787,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.03062651874960819,
+        "confusion_matrix": [
+          [
+            35,
+            2
+          ],
+          [
+            0,
+            34
+          ]
+        ]
+      },
+      "http": {
+        "n": 71,
+        "correct": 69,
+        "accuracy": 0.971830985915493,
+        "auc": 0.9904610492845787,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.03062651874960819,
+        "confusion_matrix": [
+          [
+            35,
+            2
+          ],
+          [
+            0,
+            34
+          ]
+        ],
+        "transport": "HTTP loopback",
+        "url": "http://127.0.0.1:8002",
+        "started_at_utc": "2026-09-12T05:17:22.807336+00:00",
+        "completed_at_utc": "2026-09-12T05:17:27.135759+00:00",
+        "health_latency_ms": 1.0665290001270478,
+        "http_successes": 71,
+        "http_errors": 0,
+        "detect_retries": 0,
+        "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+        "pipeline_sha256": "1c3242d4c2ddb85b58f32ae9a939a6c87d0ac4002c306b1d0c2f98c98157b51a",
+        "abstentions": 0,
+        "latency_p50_ms": 50.18782800016197,
+        "latency_p95_ms": 90.22789450000346,
+        "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+        "max_probability_delta_offline": 1.4338573731120796e-16,
+        "offline_equivalent": true
+      },
+      "delta_accuracy_pp": 4.225352112676061,
+      "improves_baseline": true,
+      "model_path": "artifacts/experiments/silence_recovery.joblib",
+      "selected_final": true
+    },
+    {
+      "name": "consistency",
+      "blocks": [
+        "consistency"
+      ],
+      "features": 64,
+      "added_features": 6,
+      "feature_names_added": [
+        "lat_entropy",
+        "cdur_iqr",
+        "cdur_entropy",
+        "adur_iqr",
+        "adur_entropy",
+        "adur_cv"
+      ],
+      "offline": {
+        "n": 71,
+        "correct": 68,
+        "accuracy": 0.9577464788732394,
+        "auc": 0.9817170111287759,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.03522842339456079,
+        "confusion_matrix": [
+          [
+            35,
+            2
+          ],
+          [
+            1,
+            33
+          ]
+        ]
+      },
+      "http": {
+        "n": 71,
+        "correct": 68,
+        "accuracy": 0.9577464788732394,
+        "auc": 0.9817170111287759,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.03522842339456079,
+        "confusion_matrix": [
+          [
+            35,
+            2
+          ],
+          [
+            1,
+            33
+          ]
+        ],
+        "transport": "HTTP loopback",
+        "url": "http://127.0.0.1:8002",
+        "started_at_utc": "2026-09-12T05:17:28.838002+00:00",
+        "completed_at_utc": "2026-09-12T05:17:33.130151+00:00",
+        "health_latency_ms": 1.2555240000438062,
+        "http_successes": 71,
+        "http_errors": 0,
+        "detect_retries": 0,
+        "model_sha256": "c788034291b8d4b1af377e7629b2162c529f77a3a0fec5476843e9623e15c4d5",
+        "pipeline_sha256": "83270d5a5a38ac17e935f6421cfcda20aa9ae4e6b64c420f79017ed13524e9d5",
+        "abstentions": 0,
+        "latency_p50_ms": 50.91960099980497,
+        "latency_p95_ms": 79.61531599994487,
+        "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+        "max_probability_delta_offline": 1.1600963245594897e-16,
+        "offline_equivalent": true
+      },
+      "delta_accuracy_pp": 2.8169014084507005,
+      "improves_baseline": true,
+      "model_path": "artifacts/experiments/consistency.joblib",
+      "selected_final": false
+    },
+    {
+      "name": "drift",
+      "blocks": [
+        "drift"
+      ],
+      "features": 60,
+      "added_features": 2,
+      "feature_names_added": [
+        "lat_trend_slope",
+        "lat_trend_r2"
+      ],
+      "offline": {
+        "n": 71,
+        "correct": 66,
+        "accuracy": 0.9295774647887324,
+        "auc": 0.9841017488076311,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.048570932522751055,
+        "confusion_matrix": [
+          [
+            33,
+            4
+          ],
+          [
+            1,
+            33
+          ]
+        ]
+      },
+      "http": {
+        "n": 71,
+        "correct": 66,
+        "accuracy": 0.9295774647887324,
+        "auc": 0.9841017488076311,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.048570932522751055,
+        "confusion_matrix": [
+          [
+            33,
+            4
+          ],
+          [
+            1,
+            33
+          ]
+        ],
+        "transport": "HTTP loopback",
+        "url": "http://127.0.0.1:8002",
+        "started_at_utc": "2026-09-12T05:17:34.708090+00:00",
+        "completed_at_utc": "2026-09-12T05:17:39.110815+00:00",
+        "health_latency_ms": 1.2713079995592125,
+        "http_successes": 71,
+        "http_errors": 0,
+        "detect_retries": 0,
+        "model_sha256": "90e205a498fea2d3c2d2ee52bfe6a5a38474ae7c1ddf8fb47bf70b30b5e2692e",
+        "pipeline_sha256": "4c024385370e24752128b5ffcc72e370b2033cfa1b1b9c2ead4e4ef9c6151b0b",
+        "abstentions": 0,
+        "latency_p50_ms": 53.56852499971865,
+        "latency_p95_ms": 82.6666585003295,
+        "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+        "max_probability_delta_offline": 1.3227266504323154e-16,
+        "offline_equivalent": true
+      },
+      "delta_accuracy_pp": 0.0,
+      "improves_baseline": false,
+      "model_path": "artifacts/experiments/drift.joblib",
+      "selected_final": false
+    },
+    {
+      "name": "autocorrelation",
+      "blocks": [
+        "autocorrelation"
+      ],
+      "features": 60,
+      "added_features": 2,
+      "feature_names_added": [
+        "lat_autocorr_1",
+        "lat_autocorr_2"
+      ],
+      "offline": {
+        "n": 71,
+        "correct": 66,
+        "accuracy": 0.9295774647887324,
+        "auc": 0.9864864864864865,
+        "eer": 0.02941176470588236,
+        "eer_legacy": 0.02702702702702703,
+        "brier": 0.04505254470764941,
+        "confusion_matrix": [
+          [
+            33,
+            4
+          ],
+          [
+            1,
+            33
+          ]
+        ]
+      },
+      "http": {
+        "n": 71,
+        "correct": 66,
+        "accuracy": 0.9295774647887324,
+        "auc": 0.9864864864864865,
+        "eer": 0.02941176470588236,
+        "eer_legacy": 0.02702702702702703,
+        "brier": 0.04505254470764941,
+        "confusion_matrix": [
+          [
+            33,
+            4
+          ],
+          [
+            1,
+            33
+          ]
+        ],
+        "transport": "HTTP loopback",
+        "url": "http://127.0.0.1:8002",
+        "started_at_utc": "2026-09-12T05:17:40.796808+00:00",
+        "completed_at_utc": "2026-09-12T05:17:45.091529+00:00",
+        "health_latency_ms": 1.1831239999082754,
+        "http_successes": 71,
+        "http_errors": 0,
+        "detect_retries": 0,
+        "model_sha256": "25d6acc3b1f5ba3522197f085ecc2cc235591eb0e89bb9cce2f956b19f8f8742",
+        "pipeline_sha256": "1b3b9fa141371c05dec73115c036ec17cf9278324e08e6ed8f290cb03bc3180a",
+        "abstentions": 0,
+        "latency_p50_ms": 49.28418999952555,
+        "latency_p95_ms": 79.13697899994077,
+        "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+        "max_probability_delta_offline": 1.3227266504323154e-16,
+        "offline_equivalent": true
+      },
+      "delta_accuracy_pp": 0.0,
+      "improves_baseline": false,
+      "model_path": "artifacts/experiments/autocorrelation.joblib",
+      "selected_final": false
+    },
+    {
+      "name": "silence_recoveryplus_consistency",
+      "blocks": [
+        "silence_recovery",
+        "consistency"
+      ],
+      "features": 73,
+      "added_features": 15,
+      "feature_names_added": [
+        "silence_fill_wait_med",
+        "silence_fill_wait_p90",
+        "silence_fill_wait_std",
+        "silence_fill_duration_med",
+        "silence_fill_duration_p90",
+        "silence_fill_duration_std",
+        "silence_fill_whole_turn_med",
+        "silence_wait_fraction_med",
+        "silence_occupied_fraction_med",
+        "lat_entropy",
+        "cdur_iqr",
+        "cdur_entropy",
+        "adur_iqr",
+        "adur_entropy",
+        "adur_cv"
+      ],
+      "offline": {
+        "n": 71,
+        "correct": 69,
+        "accuracy": 0.971830985915493,
+        "auc": 0.9904610492845787,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.03096670162899904,
+        "confusion_matrix": [
+          [
+            35,
+            2
+          ],
+          [
+            0,
+            34
+          ]
+        ]
+      },
+      "http": {
+        "n": 71,
+        "correct": 69,
+        "accuracy": 0.971830985915493,
+        "auc": 0.9904610492845787,
+        "eer": 0.05405405405405406,
+        "eer_legacy": 0.05405405405405406,
+        "brier": 0.03096670162899904,
+        "confusion_matrix": [
+          [
+            35,
+            2
+          ],
+          [
+            0,
+            34
+          ]
+        ],
+        "transport": "HTTP loopback",
+        "url": "http://127.0.0.1:8002",
+        "started_at_utc": "2026-09-12T05:17:46.679730+00:00",
+        "completed_at_utc": "2026-09-12T05:17:50.977900+00:00",
+        "health_latency_ms": 1.3030660002186778,
+        "http_successes": 71,
+        "http_errors": 0,
+        "detect_retries": 0,
+        "model_sha256": "46eaae6b2f89ad91d2fc3abf1bc3e632e517ebc219b25065d4d56bf54cd8ce52",
+        "pipeline_sha256": "c60041f90d9cfeaf6a9dfc8b43dd5f224d8eda87be98ce5e694b64f2acc8f777",
+        "abstentions": 0,
+        "latency_p50_ms": 48.9598610001849,
+        "latency_p95_ms": 78.81836500018835,
+        "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+        "max_probability_delta_offline": 1.3861524775227174e-16,
+        "offline_equivalent": true
+      },
+      "delta_accuracy_pp": 4.225352112676061,
+      "improves_baseline": true,
+      "model_path": "artifacts/experiments/silence_recoveryplus_consistency.joblib",
+      "improves_previous_selected": false,
+      "selected_final": false
+    }
+  ],
+  "selected_blocks": [
+    "silence_recovery"
+  ],
+  "selected_name": "silence_recovery",
+  "selected_metrics": {
+    "n": 71,
+    "correct": 69,
+    "accuracy": 0.971830985915493,
+    "auc": 0.9904610492845787,
+    "eer": 0.05405405405405406,
+    "eer_legacy": 0.05405405405405406,
+    "brier": 0.03062651874960819,
+    "confusion_matrix": [
+      [
+        35,
+        2
+      ],
+      [
+        0,
+        34
+      ]
+    ],
+    "transport": "HTTP loopback",
+    "url": "http://127.0.0.1:8002",
+    "started_at_utc": "2026-09-12T05:17:22.807336+00:00",
+    "completed_at_utc": "2026-09-12T05:17:27.135759+00:00",
+    "health_latency_ms": 1.0665290001270478,
+    "http_successes": 71,
+    "http_errors": 0,
+    "detect_retries": 0,
+    "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+    "pipeline_sha256": "1c3242d4c2ddb85b58f32ae9a939a6c87d0ac4002c306b1d0c2f98c98157b51a",
+    "abstentions": 0,
+    "latency_p50_ms": 50.18782800016197,
+    "latency_p95_ms": 90.22789450000346,
+    "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+    "max_probability_delta_offline": 1.4338573731120796e-16,
+    "offline_equivalent": true
+  },
+  "selected_model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+  "discarded_blocks": [
+    "interruption_recovery",
+    "consistency",
+    "drift",
+    "autocorrelation"
+  ]
+}

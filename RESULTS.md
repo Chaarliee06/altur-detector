@@ -1,40 +1,33 @@
 # RESULTS — Altur HackMTY 2026
 
-## Estado de las puertas
+## Estado y métricas
 
-Fase 1 aprobada. Fase 2 tiene evaluación HTTP local reproducida y pruebas de bordes, pero **la puerta completa sigue cerrada**: falta verificar el endpoint público. Docker fue aplazado por el usuario y no bloquea esta fase. No se han iniciado las fases 3–6.
+Fase 1 aprobada. Fase 2 **CERRADA**: las 71 llamadas evaluadas contra Render reproducen el baseline local.
+Docker está aplazado por indicación del usuario. Fase 3: Completada: bloques y combinaciones medidos por HTTP. Selección: silence_recovery.
+Prueba de aceleración: completada, con fragilidad documentada abajo.
 
-| Variante/fase | Accuracy | AUC | EER | Brier | Estado |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Referencia: turnos oficiales | 0.957746 (68/71) | 0.980922 | 0.054054 | 0.035343 | Reproducida; no desplegable sin VAD |
-| VAD original sin ajustar | 0.915493 (65/71) | 0.959459 | 0.117647 | 0.080870 | No alcanza la puerta |
-| Fase 1: VAD seleccionado en train | 0.929577 (66/71) | 0.984897 | 0.054054 | 0.045284 | APROBADA |
-| Fase 2: HTTP local | 0.929577 (66/71) | 0.984897 | 0.054054 | 0.045284 | Equivalencia comprobada |
-| Fase 2: entorno Python limpio | 0.929577 (66/71) | 0.984897 | 0.054054 | 0.045284 | Equivalencia comprobada |
-| Fase 2: host público | — | — | — | — | Pendiente de despliegue y verificación |
-| Docker | — | — | — | — | Aplazado por el usuario; fuera de la puerta actual |
-| Fase 3: comportamiento adicional | — | — | — | — | No iniciada: puerta anterior pendiente |
-| Fase 4: semántica | — | — | — | — | No iniciada |
-| Fase 5: robustez/calibración | — | — | — | — | No iniciada |
-| Fase 6: demo | — | — | — | — | No iniciada |
+| Variante | Accuracy | AUC | EER | Brier |
+| --- | ---: | ---: | ---: | ---: |
+| Referencia: turnos oficiales | 95.77% (68/71) | 0.980922 | 0.054054 | 0.035343 |
+| VAD original sin ajustar | 91.55% (65/71) | 0.959459 | 0.117647 | 0.080870 |
+| Fase 1: VAD seleccionado en train | 92.96% (66/71) | 0.984897 | 0.054054 | 0.045284 |
+| Fase 2: HTTP local, baseline | 92.96% (66/71) | 0.984897 | 0.054054 | 0.045284 |
+| Fase 2: HTTPS público, baseline | 92.96% (66/71) | 0.984897 | 0.054054 | 0.045284 |
+| Fase 3: modelo seleccionado por HTTP local | 97.18% (69/71) | 0.990461 | 0.054054 | 0.030627 |
 
-Todas las métricas medidas corresponden a las mismas 71 llamadas de val, separadas por hablante de train. Positivo = sintético. EER se interpola en el cruce FAR/FRR; los JSON también incluyen la definición discreta del código original. Las cifras calibradas aportadas en el brief no se presentan como reproducidas: la calibración no se ha ejecutado.
+Positivo = sintético. EER interpolado en el cruce FAR/FRR. `confidence` expresa la probabilidad de la clase devuelta; AUC y Brier utilizan `P(synthetic)`. No se ha aplicado calibración adicional. Los resultados del modelo nuevo corresponden a HTTP local; la medición pública documentada corresponde al baseline desplegado.
 
-## Datos y baseline preservado
+## Datos y separación
 
-- Repo oficial leído antes de ejecutar: `alturio/hackmty26`, commit `26b519598a1520cf6306d78902ef5047ae670aa4`, release `v1.0`.
-- 353 llamadas: train 282 (113 humanas, 169 sintéticas); val 71 (37 humanas, 34 sintéticas). Cada una tiene WAV y JSON; los 353 WAV cumplen estéreo, 8 kHz y PCM16.
-- `features.py` contiene **58 predictores**, más tres columnas de identificación/etiqueta/split en su CSV: 61 columnas en total.
-- Se conservaron las definiciones originales. La refactorización para recibir turnos en memoria y el VAD con configuración por defecto dieron resultados idénticos al código adjunto para las 353 llamadas.
-- El código original de entrenamiento terminaba ajustando con train+val. Se corrigió: el modelo entregado usa exclusivamente train. No se calculó CV aleatoria ni se atribuye separación por hablante a folds sin identificadores de hablante.
+353 llamadas: train 282 (113 humanas, 169 sintéticas), val 71 (37 humanas, 34 sintéticas). Los 353 WAV son estéreo, 8 kHz y PCM16. Se respeta el split oficial por hablante; ningún ajuste del clasificador usa val. Val sí se utiliza para seleccionar los bloques de Fase 3: sus ganancias son exploratorias, sin un segundo conjunto independiente. Cada acierto en val equivale a 1.41 puntos porcentuales.
 
-## Fase 1: VAD
+README oficial leído antes de empezar: `alturio/hackmty26`, commit `26b519598a1520cf6306d78902ef5047ae670aa4`, release `v1.0`. El código original queda en `baseline_original/`. Sus 58 predictores más tres columnas de metadatos suman las 61 columnas originales. Se corrigió el ajuste final train+val del script recibido para entrenar únicamente con train.
 
-Se probaron **540 configuraciones**, todas evaluadas por correlación contra referencias de las 282 llamadas de train. Val no intervino en la selección. Se congeló la configuración antes de generar las predicciones del modelo seleccionado en val.
+El dataset sigue excluido del repositorio. La petición posterior del usuario autorizó enviar las 71 llamadas a su endpoint HTTPS de Render para evaluarlo. El servicio procesa cada WAV en memoria y no lo almacena. Todo entrenamiento, extracción experimental y estrés se realiza en el entorno local.
 
-Malla: `frame_ms ∈ {20,30}`, `thresh_db ∈ {-46,-42,-38,-34,-30,-26}`, `min_speech ∈ {0.1,0.2,0.3}`, `min_sil ∈ {0.1,0.2,0.25,0.3,0.4}`, `noise_margin ∈ {6,12,18}`.
+## Fase 1: VAD congelado
 
-Configuración elegida:
+Malla de **540 configuraciones**, seleccionada únicamente por correlación con turnos de referencia en train. El clasificador de producción usa turnos del WAV, sin JSON de referencia. Los cinco parámetros elegidos son:
 
 ```json
 {
@@ -46,49 +39,97 @@ Configuración elegida:
 }
 ```
 
-El umbral de actividad es el máximo entre `thresh_db` y el percentil 10 de energía del canal más `noise_margin`. Se maximiza Pearson de `lat_med`, con correlación media de las cinco variables prioritarias como desempate.
-
-| Variable | Pearson train (n=282) | Pearson val (n=71) | MAE train |
-| --- | ---: | ---: | ---: |
-| `lat_med` | 0.947717 | 0.947633 | 0.348936 |
-| `lat_mean` | 0.922605 | 0.925372 | 0.516333 |
-| `barge_in_rate` | 0.894513 | 0.875019 | 0.059403 |
-| `overlap_ratio` | 0.887432 | 0.842966 | 0.030436 |
-| `n_caller` | 0.792691 | 0.752486 | 3.918440 |
-
-Las correlaciones de las 58 variables están en `reports/vad_correlations_train.csv` y `reports/vad_correlations_val.csv`. La malla completa está en `reports/vad_grid_train.csv`.
-
-Puerta: `lat_med` r = 0.947717 > 0.9; accuracy = 0.929577 ≥ 0.928. Son dos aciertos menos que el baseline de referencia (2.82 puntos porcentuales), dentro del margen permitido. No fue necesario probar WebRTC/Silero para satisfacer esta puerta.
-
-Bleed: en tramos de train donde la referencia marca solo agente, **0 llamadas** superaron simultáneamente |correlación instantánea| > 0.6 y |coeficiente lineal| > 0.003. No se aplicó resta entre canales. Esta prueba no descarta filtración con retardo o no lineal. Los turnos de referencia se usan solo para este diagnóstico y la comparación, nunca para inferencia.
-
-## Fase 2: endpoint
-
-`POST /detect` recibe el WAV base64, extrae los turnos con el VAD congelado, obtiene las mismas 58 variables y devuelve el veredicto y la confianza de esa clase. No usa JSON de referencia ni imputa NaN de forma distinta al entrenamiento.
-
-- 71/71 peticiones completas; 0 abstenciones en val.
-- Diferencia máxima entre probabilidades HTTP y offline: `1.3270634591222574e-16`.
-- Pruebas de bordes: 17 aprobadas. Incluyen mono, audio corto, silencio, cero frames, menos de cuatro turnos, un solo canal con actividad, WAV truncado, base64/JSON inválidos y formato incompatible.
-- `confidence=0.5` significa abstención; el bool `false` solo satisface el esquema obligatorio.
-- Confianza sin redondeo; AUC/Brier se calculan con `P(synthetic)` recuperada del veredicto y su confianza.
-- El endpoint procesa audio en memoria, no guarda muestras y evita reflejar base64 en errores. Límite: 32 MiB y 900 s.
-
-| Ejecución | p50 | p95 |
+| Feature | Pearson train | Pearson val |
 | --- | ---: | ---: |
-| HTTP local inicial | 54.12 ms | 103.54 ms |
-| HTTP con servidor en entorno limpio | 51.21 ms | 86.00 ms |
+| `lat_med` | 0.947717 | 0.947633 |
+| `lat_mean` | 0.922605 | 0.925372 |
+| `barge_in_rate` | 0.894513 | 0.875019 |
+| `overlap_ratio` | 0.887432 | 0.842966 |
+| `n_caller` | 0.792691 | 0.752486 |
 
-Medición secuencial con servidor caliente y HTTP loopback: incluye serialización JSON, transporte e inferencia; excluye lectura del archivo y codificación base64. Estas cifras **no son latencias de internet ni prueban concurrencia o disponibilidad de 15 minutos**. El entorno limpio se creó sin paquetes heredados y solo con las dependencias del servidor. Docker se aplaza por indicación del usuario.
+Puerta: r de `lat_med` > 0.9 y accuracy 92.96%, dentro de 3 puntos del 95.8% de referencia. Se conservan la malla completa y correlaciones de las 58 variables en `reports/vad_grid_train.csv`, `reports/vad_correlations_train.csv` y `reports/vad_correlations_val.csv`.
 
-Modelo evaluado SHA-256: `135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69`.
+El diagnóstico de bleed encontró 0 llamadas de train con correlación instantánea absoluta > 0.6 y coeficiente lineal absoluto > 0.003 simultáneamente. No se restaron canales; esto no descarta bleed con retardo o no lineal.
 
-Código del equipo: [Chaarliee06/altur-detector](https://github.com/Chaarliee06/altur-detector). Render está configurado para Python 3.12 con dependencias fijadas y el modelo incluido; no descarga el dataset.
-Host público: pendiente de despliegue y verificación. `/health` identifica tanto el modelo como el código de inferencia. La prueba pública exige equivalencia HTTP local de ese mismo código y 900 segundos de respuestas estables.
+## Fase 2: evaluación pública completa
 
-Para cumplir la restricción de procesamiento local, las 71 llamadas solo se envían por HTTP loopback. Las pruebas de un host externo usan tonos generados y comprueban el mismo SHA-256. No se ha enviado ningún audio del dataset a un host externo.
+URL: [altur-detector.onrender.com](https://altur-detector.onrender.com). Se llamó primero a `/health`, seguido de 71 peticiones secuenciales a `/detect`. Registro: `reports/phase2_public_http.json`.
 
-## Límites actuales del argumento
+- Inicio UTC: `2026-09-12T05:08:42.788444+00:00`.
+- Fin UTC: `2026-09-12T05:09:30.321018+00:00`.
+- Peticiones satisfactorias: 71; errores: 0; reintentos de inferencia: 0; abstenciones: 0.
+- Diferencia máxima frente a probabilidades offline: `1.3270634591222574e-16`.
+- Modelo público SHA-256: `135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69`.
+- Pipeline público SHA-256: `fcaac6c00f5900c35a29df8393f57455dee3111ae7c0abdc7bf7973aa1dca470`.
 
-La validación respeta el split oficial, pero no demuestra rendimiento sobre voces del set oculto. Todavía no se han medido motores con menor latencia, clips parciales, ruido/ganancia, calibración adicional ni señales semánticas. No usar las cifras de duración del baseline de referencia como resultados del endpoint con VAD.
+| Medición externa | Milisegundos |
+| --- | ---: |
+| `/detect` p50 | 586.69 |
+| `/detect` p95 | 839.89 |
+| `/health` previo, separado de percentiles | 5591.42 |
 
-`make all` reproduce las etapas implementadas y se detiene al encontrar una puerta pendiente. El paquete contiene código, modelo y resultados agregados; excluye audio, turnos oficiales, manifiesto y cachés por llamada.
+Latencias medidas desde este entorno hacia la URL pública, con servidor despierto y conexión del cliente reutilizada. Incluyen serialización JSON, subida, red, inferencia y respuesta; excluyen lectura del WAV y base64. Son una corrida secuencial de 71 llamadas, no una prueba de concurrencia ni disponibilidad prolongada. El cliente respeta el proxy de red del entorno para HTTPS; loopback no usa proxy.
+
+## Fase 3: ablación por bloque
+
+Mismo VAD y mismos hiperparámetros HGB: 300 iteraciones, learning rate 0.06, 15 hojas, L2=1, semilla 0. Se entrenó exclusivamente con 282 llamadas de train. Cada fila recorrió las 71 llamadas de val por el mismo `POST /detect` local y reprodujo las probabilidades offline con error < 1e-12.
+
+Regla de inclusión fijada: mejora estricta en accuracy frente a 66/71. Entre ganadores, elegir primero mayor accuracy y menos features en empate; añadir otro bloque solo si vuelve a aumentar accuracy. AUC/Brier se reportan por separado. No se ajustaron parámetros, umbral ni bins con los resultados de val.
+
+| Baseline + bloque | Features nuevas | Accuracy | Δ pp vs baseline | AUC | Brier | Decisión |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Recuperación tras interrupción | +10 | 92.96% (66/71) | +0.00 | 0.985692 | 0.043488 | Fuera: accuracy sin mejora |
+| Recuperación tras silencio | +9 | 97.18% (69/71) | +4.23 | 0.990461 | 0.030627 | INCLUIDO |
+| Consistencia | +6 | 95.77% (68/71) | +2.82 | 0.981717 | 0.035228 | Mejora solo; no añade aciertos al combinar |
+| Deriva temporal | +2 | 92.96% (66/71) | +0.00 | 0.984102 | 0.048571 | Fuera: accuracy sin mejora |
+| Autocorrelación | +2 | 92.96% (66/71) | +0.00 | 0.986486 | 0.045053 | Fuera: accuracy sin mejora |
+| Recuperación tras silencio + Consistencia | +15 | 97.18% (69/71) | +4.23 | 0.990461 | 0.030967 | Fuera: no mejora al mejor bloque |
+
+- **Interrupción:** primera entrada del agente dentro de cada turno del llamante; fracción que se calla en 0.5/1 s y antes de que termine el agente. Reanudación antes del siguiente turno del agente, limitada a 12 s después del agente y al fin de habla observado. Incluye tasa de reanudación, espera desde el cese y desde el final del agente, y duración reanudada. Ventanas sin observación se marcan NaN. El baseline ya incluía estadísticas `yield_*` del tiempo hasta callarse.
+- **Silencio:** pausas entre turnos del agente > 3 s. Para el primer turno que comienza dentro de la pausa se mide espera, duración hasta el regreso del agente y duración completa. Se agregan mediana/p90/desviación de espera y duración, mediana de duración completa, espera dividida por duración del hueco y fracción ocupada. Son nueve features. Son proxies temporales, sin inferir intención o contenido del silencio.
+- **Consistencia:** se reutilizan std/IQR/CV de latencias, std de duraciones y CV del llamante ya existentes. Se añaden entropía de latencias, IQR y entropía de ambas duraciones, y CV de duración del agente. Entropía Shannon normalizada con bins fijos en `behavior_features.py`.
+- **Deriva:** pendiente OLS de latencia frente al índice original del turno del llamante y R²; al menos tres observaciones.
+- **Autocorrelación:** Pearson de la serie consigo misma a retardos 1 y 2; al menos tres pares. Series constantes o insuficientes dan NaN.
+
+Las features se recomputan desde los turnos VAD en memoria para entrenamiento y evaluación. Se eliminó la lectura de floats redondeados desde CSV como entrada del experimento: una diferencia de un ULP puede cruzar un umbral de árbol. La primera combinación presentó una discrepancia HTTP/offline y fue rechazada; se repitió toda la ablación tras corregir la fuente de floats. La tabla contiene únicamente la repetición verificada.
+
+Modelo seleccionado: `silence_recovery`; SHA-256 `3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384`. `artifacts/model.joblib` contiene el seleccionado; `artifacts/baseline_model.joblib` conserva el baseline público. El endpoint calcula solo los bloques declarados por el artefacto. Los bloques descartados quedan disponibles para reproducir la ablación y no se ejecutan en la inferencia del modelo seleccionado.
+
+Verificación final: 17 pruebas de bordes aprobadas. `reports/phase3_final_clean_http.json` registra las 71 peticiones con servidor en un entorno Python aislado que contiene solo dependencias runtime. Diez fixtures analíticos comprueban interrupciones, censura, relleno, tendencia, autocorrelación y desplazamiento de latencias.
+
+## Robustez: sintético más rápido
+
+Se congelaron ambos modelos antes de la prueba. Se modificaron exclusivamente las 34 llamadas sintéticas de val; se comprobó que las probabilidades de las 37 humanas permanecieran idénticas. No se reentrenó ni eligieron bloques usando estos escenarios.
+
+**Solo latencias:** resta 1.0/1.5 s a cada latencia original válida, conserva emparejamientos y observaciones, permite valores negativos y recalcula estadísticas, porcentajes bajo/sobre umbral, CV y las features nuevas dependientes de esa serie. Mantiene solapamientos, interrupciones y rellenos de silencio. Por ello, el 97.18% sin caída del modelo nuevo en esta intervención parcial no demuestra robustez del motor: deja intactas sus nuevas features de silencio.
+
+**Todos los turnos:** prueba adicional que adelanta todos los intervalos VAD del llamante sintético, conserva el agente, recorta tiempos a cero y recalcula todas las features, incluidos solapamientos y rellenos. Puede cambiar el emparejamiento o filtrado de latencias. Resuelve el sesgo optimista de congelar esas señales al acelerar solo `lat_*`.
+
+| Modelo | Intervención | Adelanto | Accuracy | Caída pp | Recall sintético |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Baseline | Solo latencias | −0 s | 92.96% (66/71) | 0.00 | 97.06% |
+| Baseline | Solo latencias | −1 s | 78.87% (56/71) | 14.08 | 67.65% |
+| Baseline | Solo latencias | −1.5 s | 76.06% (54/71) | 16.90 | 61.76% |
+| Baseline | Todos los turnos del llamante | −0 s | 92.96% (66/71) | 0.00 | 97.06% |
+| Baseline | Todos los turnos del llamante | −1 s | 81.69% (58/71) | 11.27 | 73.53% |
+| Baseline | Todos los turnos del llamante | −1.5 s | 77.46% (55/71) | 15.49 | 64.71% |
+| Baseline + silencio | Solo latencias | −0 s | 97.18% (69/71) | 0.00 | 100.00% |
+| Baseline + silencio | Solo latencias | −1 s | 97.18% (69/71) | 0.00 | 100.00% |
+| Baseline + silencio | Solo latencias | −1.5 s | 97.18% (69/71) | 0.00 | 100.00% |
+| Baseline + silencio | Todos los turnos del llamante | −0 s | 97.18% (69/71) | 0.00 | 100.00% |
+| Baseline + silencio | Todos los turnos del llamante | −1 s | 71.83% (51/71) | 25.35 | 47.06% |
+| Baseline + silencio | Todos los turnos del llamante | −1.5 s | 63.38% (45/71) | 33.80 | 29.41% |
+
+Son intervenciones sobre features/turnos, no WAVs de un motor nuevo ni una medición HTTP de audio acelerado. El desplazamiento uniforme de todos los turnos también es una simplificación. Los números miden sensibilidad, no rendimiento esperado del set oculto.
+
+**Conclusión para el pitch:** El baseline depende fuertemente de la latencia. El bloque de silencio mejora val, pero también depende del tiempo: al desplazar todos los turnos 1.5 s, el seleccionado cae a 63.38% y el baseline a 77.46%. La ganancia en val no demuestra generalización frente a un motor más rápido. Harían falta aumentación temporal y señales independientes, evaluadas antes de incluirse; no se presentan como implementadas.
+
+## Reproducción y alcance
+
+```bash
+make all PUBLIC_URL=https://altur-detector.onrender.com
+```
+
+Instala dependencias, verifica/descarga los datos fijados, ejecuta Fase 1, verifica baseline local y público, corre ablaciones por HTTP y estrés. Las puertas se ejecutan secuencialmente. La comprobación pública requiere que esa URL sirva el baseline cuya métrica se compara; falla si el despliegue cambió. Para repetir Fase 3 después del cierre público registrado: `make phase3 stress`.
+
+Artefactos de evidencia: `reports/phase2_public_http.json`, `reports/phase3.json`, `reports/phase3_final_clean_http.json`, `reports/phase3_final_edges.json`, `reports/stress_latency.json`. Predicciones por llamada y cachés permanecen locales. No se ha medido semántica, acústica, clips parciales, ruido/ganancia ni calibración adicional. La demo sigue pendiente.

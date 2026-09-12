@@ -12,7 +12,7 @@ MODEL_PARAMETERS = dict(max_iter=300, learning_rate=0.06, max_leaf_nodes=15,
                         l2_regularization=1.0, random_state=0)
 
 
-def fit_and_evaluate(frame, feature_names, output=None, vad_config=None):
+def fit_and_evaluate(frame, feature_names, output=None, vad_config=None, feature_blocks=()):
     train = frame.loc[frame.split == "train"]
     val = frame.loc[frame.split == "val"]
     assert len(train) == 282 and len(val) == 71, "Unexpected official split sizes"
@@ -30,6 +30,10 @@ def fit_and_evaluate(frame, feature_names, output=None, vad_config=None):
                      "train_calls": 282, "nan_policy": "native_hgb",
                      "decision_threshold": 0.5,
                      "score_semantics": "P(synthetic)", "metrics": scores}, output)
+        if feature_blocks:
+            bundle = joblib.load(output)
+            bundle["feature_blocks"] = list(feature_blocks)
+            joblib.dump(bundle, output)
     return scores, probability
 
 

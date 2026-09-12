@@ -1,0 +1,310 @@
+{
+  "n": 71,
+  "human_unchanged": 37,
+  "synthetic_modified": 34,
+  "latency_only": "Subtract delta from every originally valid signed latency; recompute lat statistics, thresholds, CV and selected latency entropy/trend/autocorrelation. Preserve observations and agent pairings. Freeze non-latency variables, including overlap, barge-in and silence fills.",
+  "caller_turn_shift": "Move all synthetic caller VAD intervals earlier by delta, clip at zero, keep the agent fixed and recompute every model feature, including overlaps and silence fills. Reassociation/filtering can change which latencies remain; this is a separate, broader counterfactual.",
+  "limitations": "Feature/turn-space stress only, not modified WAVs through HTTP, real faster-engine audio or hidden-set accuracy. Negative latencies are allowed. No retraining, calibration or block selection uses the stress results.",
+  "results": [
+    {
+      "n": 71,
+      "correct": 66,
+      "accuracy": 0.9295774647887324,
+      "auc": 0.9848966613672496,
+      "eer": 0.05405405405405406,
+      "eer_legacy": 0.05405405405405406,
+      "brier": 0.04528359740899822,
+      "confusion_matrix": [
+        [
+          33,
+          4
+        ],
+        [
+          1,
+          33
+        ]
+      ],
+      "model": "baseline",
+      "mode": "latency_only",
+      "acceleration_s": 0.0,
+      "accuracy_drop_pp": 0.0,
+      "synthetic_recall": 0.9705882352941176,
+      "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69"
+    },
+    {
+      "n": 71,
+      "correct": 56,
+      "accuracy": 0.7887323943661971,
+      "auc": 0.9125596184419714,
+      "eer": 0.13513513513513514,
+      "eer_legacy": 0.13513513513513514,
+      "brier": 0.16985699680519267,
+      "confusion_matrix": [
+        [
+          33,
+          4
+        ],
+        [
+          11,
+          23
+        ]
+      ],
+      "model": "baseline",
+      "mode": "latency_only",
+      "acceleration_s": 1.0,
+      "accuracy_drop_pp": 14.084507042253524,
+      "synthetic_recall": 0.6764705882352942,
+      "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69"
+    },
+    {
+      "n": 71,
+      "correct": 54,
+      "accuracy": 0.7605633802816901,
+      "auc": 0.9054054054054054,
+      "eer": 0.13513513513513514,
+      "eer_legacy": 0.13513513513513514,
+      "brier": 0.19244738579360393,
+      "confusion_matrix": [
+        [
+          33,
+          4
+        ],
+        [
+          13,
+          21
+        ]
+      ],
+      "model": "baseline",
+      "mode": "latency_only",
+      "acceleration_s": 1.5,
+      "accuracy_drop_pp": 16.901408450704224,
+      "synthetic_recall": 0.6176470588235294,
+      "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69"
+    },
+    {
+      "n": 71,
+      "correct": 66,
+      "accuracy": 0.9295774647887324,
+      "auc": 0.9848966613672496,
+      "eer": 0.05405405405405406,
+      "eer_legacy": 0.05405405405405406,
+      "brier": 0.04528359740899822,
+      "confusion_matrix": [
+        [
+          33,
+          4
+        ],
+        [
+          1,
+          33
+        ]
+      ],
+      "model": "baseline",
+      "mode": "caller_turn_shift",
+      "acceleration_s": 0.0,
+      "accuracy_drop_pp": 0.0,
+      "synthetic_recall": 0.9705882352941176,
+      "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69"
+    },
+    {
+      "n": 71,
+      "correct": 58,
+      "accuracy": 0.8169014084507042,
+      "auc": 0.9411764705882353,
+      "eer": 0.13513513513513514,
+      "eer_legacy": 0.13513513513513514,
+      "brier": 0.1438232416926511,
+      "confusion_matrix": [
+        [
+          33,
+          4
+        ],
+        [
+          9,
+          25
+        ]
+      ],
+      "model": "baseline",
+      "mode": "caller_turn_shift",
+      "acceleration_s": 1.0,
+      "accuracy_drop_pp": 11.267605633802813,
+      "synthetic_recall": 0.7352941176470589,
+      "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69"
+    },
+    {
+      "n": 71,
+      "correct": 55,
+      "accuracy": 0.7746478873239436,
+      "auc": 0.9046104928457871,
+      "eer": 0.16216216216216217,
+      "eer_legacy": 0.16216216216216217,
+      "brier": 0.1914285362867304,
+      "confusion_matrix": [
+        [
+          33,
+          4
+        ],
+        [
+          12,
+          22
+        ]
+      ],
+      "model": "baseline",
+      "mode": "caller_turn_shift",
+      "acceleration_s": 1.5,
+      "accuracy_drop_pp": 15.492957746478876,
+      "synthetic_recall": 0.6470588235294118,
+      "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69"
+    },
+    {
+      "n": 71,
+      "correct": 69,
+      "accuracy": 0.971830985915493,
+      "auc": 0.9904610492845787,
+      "eer": 0.05405405405405406,
+      "eer_legacy": 0.05405405405405406,
+      "brier": 0.03062651874960819,
+      "confusion_matrix": [
+        [
+          35,
+          2
+        ],
+        [
+          0,
+          34
+        ]
+      ],
+      "model": "selected",
+      "mode": "latency_only",
+      "acceleration_s": 0.0,
+      "accuracy_drop_pp": 0.0,
+      "synthetic_recall": 1.0,
+      "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384"
+    },
+    {
+      "n": 71,
+      "correct": 69,
+      "accuracy": 0.971830985915493,
+      "auc": 0.9872813990461049,
+      "eer": 0.05405405405405406,
+      "eer_legacy": 0.05405405405405406,
+      "brier": 0.03220748078671807,
+      "confusion_matrix": [
+        [
+          35,
+          2
+        ],
+        [
+          0,
+          34
+        ]
+      ],
+      "model": "selected",
+      "mode": "latency_only",
+      "acceleration_s": 1.0,
+      "accuracy_drop_pp": 0.0,
+      "synthetic_recall": 1.0,
+      "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384"
+    },
+    {
+      "n": 71,
+      "correct": 69,
+      "accuracy": 0.971830985915493,
+      "auc": 0.9872813990461049,
+      "eer": 0.05405405405405406,
+      "eer_legacy": 0.05405405405405406,
+      "brier": 0.03215811475494294,
+      "confusion_matrix": [
+        [
+          35,
+          2
+        ],
+        [
+          0,
+          34
+        ]
+      ],
+      "model": "selected",
+      "mode": "latency_only",
+      "acceleration_s": 1.5,
+      "accuracy_drop_pp": 0.0,
+      "synthetic_recall": 1.0,
+      "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384"
+    },
+    {
+      "n": 71,
+      "correct": 69,
+      "accuracy": 0.971830985915493,
+      "auc": 0.9904610492845787,
+      "eer": 0.05405405405405406,
+      "eer_legacy": 0.05405405405405406,
+      "brier": 0.03062651874960819,
+      "confusion_matrix": [
+        [
+          35,
+          2
+        ],
+        [
+          0,
+          34
+        ]
+      ],
+      "model": "selected",
+      "mode": "caller_turn_shift",
+      "acceleration_s": 0.0,
+      "accuracy_drop_pp": 0.0,
+      "synthetic_recall": 1.0,
+      "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384"
+    },
+    {
+      "n": 71,
+      "correct": 51,
+      "accuracy": 0.7183098591549296,
+      "auc": 0.9030206677265501,
+      "eer": 0.11764705882352944,
+      "eer_legacy": 0.10810810810810811,
+      "brier": 0.27565014172304064,
+      "confusion_matrix": [
+        [
+          35,
+          2
+        ],
+        [
+          18,
+          16
+        ]
+      ],
+      "model": "selected",
+      "mode": "caller_turn_shift",
+      "acceleration_s": 1.0,
+      "accuracy_drop_pp": 25.352112676056336,
+      "synthetic_recall": 0.47058823529411764,
+      "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384"
+    },
+    {
+      "n": 71,
+      "correct": 45,
+      "accuracy": 0.6338028169014085,
+      "auc": 0.8823529411764705,
+      "eer": 0.16216216216216217,
+      "eer_legacy": 0.16216216216216217,
+      "brier": 0.3592866788231855,
+      "confusion_matrix": [
+        [
+          35,
+          2
+        ],
+        [
+          24,
+          10
+        ]
+      ],
+      "model": "selected",
+      "mode": "caller_turn_shift",
+      "acceleration_s": 1.5,
+      "accuracy_drop_pp": 33.80281690140845,
+      "synthetic_recall": 0.29411764705882354,
+      "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384"
+    }
+  ]
+}

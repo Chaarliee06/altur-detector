@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from threadpoolctl import threadpool_limits
 
-from features import extract_turns
+from behavior_features import BLOCKS, extract_model_features
 from provenance import pipeline_fingerprint
 from vad import energy_profile, read_wav, turns_from_profiles
 
@@ -73,15 +73,17 @@ async def lifespan(app):
         raise RuntimeError("Model must use train-only fitting and native missing values")
     if not bundle.get("vad_config"):
         raise RuntimeError("A frozen VAD configuration is required")
+    if set(bundle.get("feature_blocks", ())) - set(BLOCKS):
+        raise RuntimeError("Model requires unsupported behavior blocks")
     app.state.bundle = bundle
     app.state.model_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
-    app.state.pipeline_sha256 = pipeline_fingerprint()
+    app.state.pipeline_sha256 = pipeline_fingerprint(model_path=path)
     with threadpool_limits(limits=1):
         bundle["model"].predict_proba(np.zeros((1, len(bundle["feats"]))))
         yield
 
 
-app = FastAPI(title="Altur · Detector conversacional", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Altur · Detector conversacional", version="0.3.0", lifespan=lifespan)
 app.add_middleware(RequestBodyLimit)
 
 
@@ -144,7 +146,7 @@ def detect(req: DetectRequest):
     turns = turns_from_profiles(profiles, **config)
     if len(turns["turns"]) < 4:
         return abstain()
-    features = extract_turns(turns)
+    features = extract_model_features(turns, bundle.get("feature_blocks", ()))
     if not features or features["n_caller"] + features["n_agent"] < 4:
         return abstain()
     row = np.asarray([[features.get(name, np.nan) for name in bundle["feats"]]], dtype=float)
@@ -158,4 +160,5 @@ def detect(req: DetectRequest):
 def health():
     return {"ok": True, "model_sha256": app.state.model_sha256,
             "pipeline_sha256": app.state.pipeline_sha256,
-            "features": len(app.state.bundle["feats"])}
+            "features": len(app.state.bundle["feats"]),
+            "feature_blocks": app.state.bundle.get("feature_blocks", [])}
