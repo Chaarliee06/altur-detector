@@ -1,0 +1,11 @@
+**
+!Dockerfile
+!requirements.lock
+!app.py
+!serve.py
+!features.py
+!vad.py
+!provenance.py
+!artifacts/
+artifacts/**
+!artifacts/model.joblib

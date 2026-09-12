@@ -1,0 +1,28 @@
+{
+  "n": 71,
+  "correct": 66,
+  "accuracy": 0.9295774647887324,
+  "auc": 0.9848966613672496,
+  "eer": 0.05405405405405406,
+  "eer_legacy": 0.05405405405405406,
+  "brier": 0.04528359740899822,
+  "confusion_matrix": [
+    [
+      33,
+      4
+    ],
+    [
+      1,
+      33
+    ]
+  ],
+  "transport": "HTTP loopback",
+  "model_sha256": "135723cf56e554b006b224430d2a5dcb2d6f2950d7e86f75d28f70615ff8ea69",
+  "pipeline_sha256": "fcaac6c00f5900c35a29df8393f57455dee3111ae7c0abdc7bf7973aa1dca470",
+  "abstentions": 0,
+  "latency_p50_ms": 54.1158070000165,
+  "latency_p95_ms": 103.53935350030952,
+  "latency_scope": "Sequential, warm server; includes JSON encoding, HTTP and inference, excludes WAV read/base64",
+  "max_probability_delta_offline": 1.3270634591222574e-16,
+  "offline_equivalent": true
+}

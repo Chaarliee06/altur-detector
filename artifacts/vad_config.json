@@ -1,0 +1,7 @@
+{
+  "frame_ms": 30,
+  "thresh_db": -46.0,
+  "min_speech": 0.1,
+  "min_sil": 0.2,
+  "noise_margin": 18.0
+}

@@ -1,0 +1,227 @@
+{
+  "features": 58,
+  "reference_metrics": {
+    "n": 71,
+    "correct": 68,
+    "accuracy": 0.9577464788732394,
+    "auc": 0.9809220985691574,
+    "eer": 0.05405405405405406,
+    "eer_legacy": 0.05405405405405406,
+    "brier": 0.035342971155292995,
+    "confusion_matrix": [
+      [
+        34,
+        3
+      ],
+      [
+        0,
+        34
+      ]
+    ]
+  },
+  "default_vad_metrics": {
+    "n": 71,
+    "correct": 65,
+    "accuracy": 0.9154929577464789,
+    "auc": 0.9594594594594594,
+    "eer": 0.11764705882352944,
+    "eer_legacy": 0.10810810810810811,
+    "brier": 0.08087022987610672,
+    "confusion_matrix": [
+      [
+        32,
+        5
+      ],
+      [
+        1,
+        33
+      ]
+    ]
+  },
+  "default_priority_correlations": [
+    {
+      "feature": "n_caller",
+      "pearson_r": 0.6740097372455186,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 5.414893617021277
+    },
+    {
+      "feature": "lat_mean",
+      "pearson_r": 0.83639535883211,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.7389729214923805
+    },
+    {
+      "feature": "lat_med",
+      "pearson_r": 0.8587098525894253,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.5838475177304967
+    },
+    {
+      "feature": "barge_in_rate",
+      "pearson_r": 0.7810888222995412,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.08137431883316386
+    },
+    {
+      "feature": "overlap_ratio",
+      "pearson_r": 0.7696563367736278,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.03695728606714888
+    }
+  ],
+  "bleed_calls_abs_correlation_over_06": 0,
+  "grid": {
+    "frame_ms": [
+      20,
+      30
+    ],
+    "thresh_db": [
+      -46,
+      -42,
+      -38,
+      -34,
+      -30,
+      -26
+    ],
+    "min_speech": [
+      0.1,
+      0.2,
+      0.3
+    ],
+    "min_sil": [
+      0.1,
+      0.2,
+      0.25,
+      0.3,
+      0.4
+    ],
+    "noise_margin": [
+      6,
+      12,
+      18
+    ]
+  },
+  "grid_configurations": 540,
+  "selected_config": {
+    "frame_ms": 30,
+    "thresh_db": -46.0,
+    "min_speech": 0.1,
+    "min_sil": 0.2,
+    "noise_margin": 18.0
+  },
+  "selection_split": "train",
+  "selected_vad_metrics": {
+    "n": 71,
+    "correct": 66,
+    "accuracy": 0.9295774647887324,
+    "auc": 0.9848966613672496,
+    "eer": 0.05405405405405406,
+    "eer_legacy": 0.05405405405405406,
+    "brier": 0.04528359740899822,
+    "confusion_matrix": [
+      [
+        33,
+        4
+      ],
+      [
+        1,
+        33
+      ]
+    ]
+  },
+  "priority_correlations_train": [
+    {
+      "feature": "n_caller",
+      "pearson_r": 0.7926913389668235,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 3.9184397163120566
+    },
+    {
+      "feature": "lat_mean",
+      "pearson_r": 0.922605247979178,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.5163325898065112
+    },
+    {
+      "feature": "lat_med",
+      "pearson_r": 0.9477166274501966,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.3489361702127661
+    },
+    {
+      "feature": "barge_in_rate",
+      "pearson_r": 0.8945126334028558,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.059402574097666916
+    },
+    {
+      "feature": "overlap_ratio",
+      "pearson_r": 0.887431615409501,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.030435657981002198
+    }
+  ],
+  "priority_correlations_val": [
+    {
+      "feature": "n_caller",
+      "pearson_r": 0.7524862357611086,
+      "n_valid": 71,
+      "n_missing": 0,
+      "mae": 3.704225352112676
+    },
+    {
+      "feature": "lat_mean",
+      "pearson_r": 0.9253718685024269,
+      "n_valid": 71,
+      "n_missing": 0,
+      "mae": 0.45140825267108164
+    },
+    {
+      "feature": "lat_med",
+      "pearson_r": 0.9476328496531654,
+      "n_valid": 71,
+      "n_missing": 0,
+      "mae": 0.31598591549295874
+    },
+    {
+      "feature": "barge_in_rate",
+      "pearson_r": 0.8750192901402611,
+      "n_valid": 71,
+      "n_missing": 0,
+      "mae": 0.0633368475898706
+    },
+    {
+      "feature": "overlap_ratio",
+      "pearson_r": 0.8429659092295061,
+      "n_valid": 71,
+      "n_missing": 0,
+      "mae": 0.03225849937428449
+    }
+  ],
+  "gate": {
+    "lat_med_r_train": 0.9477166274501966,
+    "minimum_accuracy": 0.928,
+    "passed": true
+  },
+  "elapsed_s": 50.11386393900011,
+  "versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scipy": "1.17.0",
+    "scikit-learn": "1.8.0",
+    "soundfile": "0.14.0",
+    "joblib": "1.5.3"
+  },
+  "features_sha256": "8a02166c131adbf7e1dc15abb9c59af17b228eab2dc820769ae37db5603e7041"
+}

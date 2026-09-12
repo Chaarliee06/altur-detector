@@ -1,0 +1,79 @@
+{
+  "features": 58,
+  "reference_metrics": {
+    "n": 71,
+    "correct": 68,
+    "accuracy": 0.9577464788732394,
+    "auc": 0.9809220985691574,
+    "eer": 0.05405405405405406,
+    "eer_legacy": 0.05405405405405406,
+    "brier": 0.035342971155292995,
+    "confusion_matrix": [
+      [
+        34,
+        3
+      ],
+      [
+        0,
+        34
+      ]
+    ]
+  },
+  "default_vad_metrics": {
+    "n": 71,
+    "correct": 65,
+    "accuracy": 0.9154929577464789,
+    "auc": 0.9594594594594594,
+    "eer": 0.11764705882352944,
+    "eer_legacy": 0.10810810810810811,
+    "brier": 0.08087022987610672,
+    "confusion_matrix": [
+      [
+        32,
+        5
+      ],
+      [
+        1,
+        33
+      ]
+    ]
+  },
+  "default_priority_correlations": [
+    {
+      "feature": "n_caller",
+      "pearson_r": 0.6740097372455186,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 5.414893617021277
+    },
+    {
+      "feature": "lat_mean",
+      "pearson_r": 0.83639535883211,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.7389729214923805
+    },
+    {
+      "feature": "lat_med",
+      "pearson_r": 0.8587098525894253,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.5838475177304967
+    },
+    {
+      "feature": "barge_in_rate",
+      "pearson_r": 0.7810888222995412,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.08137431883316386
+    },
+    {
+      "feature": "overlap_ratio",
+      "pearson_r": 0.7696563367736278,
+      "n_valid": 282,
+      "n_missing": 0,
+      "mae": 0.03695728606714888
+    }
+  ],
+  "bleed_calls_abs_correlation_over_06": 0
+}
