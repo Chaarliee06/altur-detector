@@ -1,0 +1,73 @@
+{
+  "completed_at_utc": "2026-09-13T04:39:16.396423+00:00",
+  "url": "https://altur-detector.onrender.com/detect",
+  "deployed_commit": "19290711b7f31a9270ca88303c42c14515742e28",
+  "render_deploy_id": "dep-daj2f6u7bikc73agm5l0",
+  "health_status": 200,
+  "health": {
+    "ok": true,
+    "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+    "pipeline_sha256": "cc5b74284820f8772660f02847509b02e79faa2f45b51a15df72a7ff29626edd",
+    "features": 67,
+    "feature_blocks": [
+      "silence_recovery"
+    ],
+    "decision_threshold": 0.5,
+    "contract_version": "judge-audio-base64-v1",
+    "audio_fields": [
+      "audio_base64",
+      "audio"
+    ],
+    "detect_error_status": 200
+  },
+  "health_verification_stage": "After the official CLI; its launch also required a matching corrected /health",
+  "cors_allow_origin": "*",
+  "official_client_source_commit": "429adf76b15d1bd18e26b50f371ca4f13b0585c0",
+  "official_client_sha256": "593f78ceb80017e791f0f8d552ca6a7b3b6763c11beedfa1f68ab1a55c363364",
+  "official_client_modified": false,
+  "command": "python scripts/check_endpoint.py --url https://altur-detector.onrender.com/detect --split val --n 20",
+  "process_exit_code": 0,
+  "stdout_saved_at_utc": "2026-09-13T04:37:41.708156+00:00",
+  "stdout_sha256": "dcce018464d5a1b60678ee98f597cf1c82b5a620cea8269b5af7a46e36e66a46",
+  "summary_as_printed": {
+    "calls": 20,
+    "answered": 20,
+    "errors": 0,
+    "accuracy": 0.95,
+    "tpr_synthetic": 1.0,
+    "tnr_human": 0.909,
+    "mean_latency_s": 5.318,
+    "max_latency_s": 8.351,
+    "balanced_accuracy": 0.955,
+    "auc": 0.99,
+    "brier": 0.052
+  },
+  "classification_metrics_from_stdout": {
+    "accuracy": 0.95,
+    "balanced_accuracy": 0.9545454545454546,
+    "human_correct": 10,
+    "human_count": 11,
+    "synthetic_correct": 9,
+    "synthetic_count": 9
+  },
+  "labels_match_local_20_call_run": true,
+  "summary_precision_note": "The unchanged CLI prints floats to 3 decimals. Exact classification rates were recomputed from its printed labels and verdicts; AUC/Brier/latency summaries retain the CLI precision.",
+  "longest_measurement_started_at_utc": "2026-09-13T04:39:04.992265+00:00",
+  "longest_call": {
+    "dataset_calls_scanned": 353,
+    "selection": "Maximum nframes/framerate over all 353 WAV headers; also maximal manifest duration",
+    "audio_duration_s": 273.9,
+    "manifest_duration_s": 273.0,
+    "wav_bytes": 8764844,
+    "split": "train",
+    "total_seconds": 6.69924582800013,
+    "request_response_seconds": 6.651573297000141,
+    "preparation_and_validation_seconds": 0.04767253099998925,
+    "valid_response": true,
+    "judge_timeout_seconds": 30,
+    "margin_seconds": 23.30075417199987,
+    "under_30_seconds": true,
+    "timing_scope": "Total includes local WAV read, base64, JSON encoding, HTTPS upload, server processing, response and validation. Request/response excludes local preparation. Instance warmed with /health. Neither timer isolates model inference."
+  },
+  "gate_passed": true
+}

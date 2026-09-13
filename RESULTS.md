@@ -4,7 +4,43 @@
 
 El cliente oficial actual envía `audio_base64`, `call_id`, `sample_rate` y `channels`. Se añadió compatibilidad con ese contrato y con `audio`; metadatos opcionales ignorados, respuestas de respaldo HTTP 200, booleano nativo y CORS en respuestas normales y de error. Se probaron errores de JSON/base64/WAV, campos ausentes, excepciones de inferencia, límite del cuerpo y preflight. Son comprobaciones de desarrollo; la puerta válida sigue siendo el cliente oficial contra Render.
 
-**Despliegue y verificación pública del contrato nuevo: pendientes.** No se presenta la evaluación histórica del formato `audio` como validación del cliente actual. Falta registrar la salida completa del cliente y la latencia pública del WAV más largo del dataset, de **273.0 segundos**.
+**Despliegue y verificación pública del contrato nuevo: APROBADOS.** Render sirve el commit `19290711b7f31a9270ca88303c42c14515742e28`, despliegue `dep-daj2f6u7bikc73agm5l0`, confirmado `live` el 2026-09-13. `/health` respondió HTTP 200 antes del cliente oficial y después de sus 20 llamadas, con `contract_version: judge-audio-base64-v1`, 67 señales, bloque `silence_recovery` y umbral 0.5. El pipeline público coincide con el local: `cc5b74284820f8772660f02847509b02e79faa2f45b51a15df72a7ff29626edd`. CORS público devuelve `Access-Control-Allow-Origin: *`.
+
+Se ejecutó exactamente este comando con el cliente oficial sin modificaciones, semilla predeterminada 0 y timeout predeterminado de 30 s:
+
+```bash
+python scripts/check_endpoint.py --url https://altur-detector.onrender.com/detect --split val --n 20
+```
+
+| Medida del cliente oficial público | Resultado |
+| --- | ---: |
+| Respuestas válidas | 20/20 |
+| Errores HTTP, conexión o contrato | 0 |
+| Accuracy | 95.00% (19/20) |
+| Balanced accuracy | 95.45% |
+| Humanos correctos | 10/11 |
+| Sintéticos correctos | 9/9 |
+| AUC impreso por el cliente | 0.990 |
+| Brier impreso por el cliente | 0.052 |
+| Tiempo medio HTTP impreso | 5.318 s |
+| Tiempo máximo HTTP impreso | 8.351 s |
+
+El único error de clasificación fue un falso positivo humano. Los 20 veredictos coinciden con la misma muestra ejecutada en local. La muestra pública de 20 llamadas y la validación completa de 71 tienen denominadores distintos; 95.00% en esta muestra no reemplaza el 97.18% de val completa. El cliente imprime floats con tres decimales; balanced accuracy exacta se calculó de sus etiquetas y veredictos: `(10/11 + 9/9) / 2`. AUC, Brier y tiempos medios/máximos se conservan a la precisión impresa.
+
+### Llamada más larga contra la URL pública
+
+Se inspeccionaron las cabeceras de los **353 WAV** y se seleccionó el máximo de `nframes / framerate`, **273.9 segundos**, estéreo PCM16 a 8 kHz y 8,764,844 bytes. El manifest indica 273 s para esa misma llamada; la diferencia de 0.9 s es de metadatos y se reporta la duración real del WAV. Se envió íntegra mediante `post_call()` del cliente oficial al mismo `/detect`, con timeout 30 s e instancia despierta mediante `/health`.
+
+| Medida externa | Segundos |
+| --- | ---: |
+| Tiempo total, incluida preparación local | 6.699246 |
+| Petición y respuesta HTTPS | 6.651573 |
+| Lectura, base64, JSON y validación local | 0.047673 |
+| Margen frente a 30 s | 23.300754 |
+
+Respuesta válida y dentro del límite con margen. El tiempo total incluye lectura del WAV, base64, JSON, subida, red, procesamiento del servidor y validación de la respuesta. El tiempo HTTPS incluye red y procesamiento; no se presenta como tiempo aislado de inferencia. Es una medición con instancia despierta, no una medición de arranque en frío.
+
+Registro agregado y procedencia: `reports/judge_public_contract.json`. La salida completa sin editar del cliente se entregó en la conversación; su SHA-256 queda en el registro. Los audios y las predicciones individuales permanecen fuera de Git.
 
 ### Umbral para balanced accuracy
 
@@ -34,7 +70,7 @@ Prueba de aceleración: completada, con fragilidad documentada abajo.
 | Fase 2: HTTPS público, baseline | 92.96% (66/71) | 0.984897 | 0.054054 | 0.045284 |
 | Fase 3: modelo seleccionado por HTTP local | 97.18% (69/71) | 0.990461 | 0.054054 | 0.030627 |
 
-Positivo = sintético. EER interpolado en el cruce FAR/FRR. `confidence` expresa la probabilidad de la clase devuelta; AUC y Brier utilizan `P(synthetic)`. No se ha aplicado calibración adicional. Los resultados del modelo nuevo corresponden a HTTP local; la medición pública documentada corresponde al baseline desplegado.
+Positivo = sintético. EER interpolado en el cruce FAR/FRR. `confidence` expresa la probabilidad de la clase devuelta; AUC y Brier utilizan `P(synthetic)`. No se ha aplicado calibración adicional. Esta tabla histórica recoge corridas de 71 llamadas: el modelo nuevo por HTTP local y el baseline por HTTPS público. El chequeo actual del modelo nuevo con 20 llamadas públicas está documentado en el apartado del contrato del juez.
 
 ## Datos y separación
 

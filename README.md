@@ -2,11 +2,11 @@
 
 `POST /detect` clasifica al llamante como humano o sintético a partir de un WAV estéreo de 8 kHz: canal 0 llamante, canal 1 agente. Extrae turnos con un VAD congelado y usa HistGradientBoosting, sin GPU ni servicios de inferencia externos.
 
-**Contrato del juez actualizado (2026-09-13):** acepta `audio_base64` y el alias anterior `audio`. Los errores de `/detect` responden HTTP 200 con abstención. El modelo de 67 señales conserva el umbral **0.5**, que ya maximiza balanced accuracy en las 71 llamadas de val: **97.30%**, accuracy **97.18%**. La verificación del contrato en la URL pública con el cliente oficial está pendiente de desplegar esta corrección; las mediciones históricas siguientes no la sustituyen.
+**Contrato del juez desplegado y verificado (2026-09-13):** acepta `audio_base64` y el alias anterior `audio`. Los errores de `/detect` responden HTTP 200 con abstención. El cliente oficial sin cambios completó **20/20 respuestas válidas, cero errores y 19/20 aciertos** contra Render: accuracy **95.00%**, balanced accuracy **95.45%**. El WAV más largo, de **273.9 s**, respondió en **6.70 s totales**, con **23.30 s de margen** frente al límite. `/health` confirmó el contrato nuevo y el modelo de 67 señales. Este conserva el umbral **0.5**, que ya maximiza balanced accuracy en las 71 llamadas de val: **97.30%**, accuracy **97.18%**. Evidencia: [RESULTS.md](RESULTS.md) y `reports/judge_public_contract.json`.
 
 **Fase 2 cerrada:** las 71 llamadas de val contra [Render](https://altur-detector.onrender.com) dieron **66/71 (92.96%)**, AUC **0.9849**, Brier **0.0453** y latencias externas **p50 586.69 ms / p95 839.89 ms**. Cero errores y probabilidades equivalentes al baseline local.
 
-**Fase 3:** se probaron cinco bloques por separado y una combinación. El artefacto seleccionado añade únicamente respuesta al silencio: **69/71 (97.18%)**, AUC **0.9905**, Brier **0.0306**, verificado por el mismo endpoint en HTTP local. Tiene 67 features: 58 originales y nueve nuevas. `artifacts/baseline_model.joblib` conserva el baseline público; `artifacts/model.joblib` contiene el seleccionado. La evaluación pública registrada corresponde al baseline, y la del seleccionado corresponde a HTTP local.
+**Fase 3:** se probaron cinco bloques por separado y una combinación. El artefacto seleccionado añade únicamente respuesta al silencio: **69/71 (97.18%)**, AUC **0.9905**, Brier **0.0306**, verificado por el mismo endpoint en HTTP local. Tiene 67 features: 58 originales y nueve nuevas. `artifacts/baseline_model.joblib` conserva el baseline histórico; `artifacts/model.joblib` contiene el seleccionado que ahora sirve Render. Las evaluaciones históricas de 71 llamadas corresponden al baseline público y al seleccionado local; el chequeo actual del cliente oficial usa la muestra de 20 llamadas indicada arriba.
 
 **Limitación medida:** el seleccionado cae a **63.38%** al adelantar 1.5 s todos los turnos sintéticos y recalcular las señales. La mejora en val no demuestra robustez frente a motores más rápidos. Las tablas completas, definiciones y decisiones están en [RESULTS.md](RESULTS.md).
 
@@ -117,7 +117,7 @@ Val también se utiliza para seleccionar bloques: el 97.18% es exploratorio y re
 
 ## Render y modelo publicado
 
-`render.yaml` configura runtime Python, dependencias fijadas, `python serve.py`, `/health` y el artefacto incluido. No entrena ni descarga datos en Render. Los despliegues automáticos están desactivados en ese Blueprint; aplicar un commit nuevo al servicio requiere desplegarlo y verificar `/health` y las 71 llamadas contra el artefacto correspondiente. La configuración efectiva del servicio creado desde el Dashboard puede diferir del Blueprint.
+`render.yaml` configura runtime Python, dependencias fijadas, `python serve.py`, `/health` y el artefacto incluido. No entrena ni descarga datos en Render. Los despliegues automáticos están desactivados tanto en el Blueprint como en la configuración efectiva verificada. La corrección se desplegó desde el commit `19290711b7f31a9270ca88303c42c14515742e28`; Render confirmó estado `live` en `dep-daj2f6u7bikc73agm5l0`. Para cambios de inferencia, desplegar y verificar `/health` y el cliente oficial público con el comando anterior.
 
 El plan gratuito puede suspender la instancia: llamar primero a `/health`. Los percentiles registrados excluyen ese chequeo previo. [Documentación de Render](https://render.com/docs/free).
 
