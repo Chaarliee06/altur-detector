@@ -11,4 +11,7 @@ def pipeline_fingerprint(root=None, model_path=None):
         path = Path(model_path) if name == "artifacts/model.joblib" and model_path else root / name
         digest.update(path.read_bytes())
         digest.update(b"\0")
+    policy = root / "artifacts/decision_policy.json"
+    if policy.exists():
+        digest.update(b"artifacts/decision_policy.json\0" + policy.read_bytes() + b"\0")
     return digest.hexdigest()

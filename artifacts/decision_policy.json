@@ -1,0 +1,7 @@
+{
+  "model_sha256": "3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384",
+  "threshold": 0.5,
+  "comparison": ">",
+  "objective": "balanced_accuracy",
+  "selection_split": "val"
+}

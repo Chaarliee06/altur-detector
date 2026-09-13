@@ -9,12 +9,16 @@ cache/
 artifacts/*
 reports/*.csv
 reports/*.json
+reports/*.txt
 *.joblib
 *.zip
 .env
 !artifacts/model.joblib
 !artifacts/baseline_model.joblib
 !artifacts/vad_config.json
+!artifacts/decision_policy.json
+!reports/threshold.json
+!reports/judge_public_contract.json
 !reports/phase1.json
 !reports/phase1_preparation.json
 !reports/phase2_http.json

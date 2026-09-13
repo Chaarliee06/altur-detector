@@ -2,6 +2,8 @@
 
 `POST /detect` clasifica al llamante como humano o sintético a partir de un WAV estéreo de 8 kHz: canal 0 llamante, canal 1 agente. Extrae turnos con un VAD congelado y usa HistGradientBoosting, sin GPU ni servicios de inferencia externos.
 
+**Contrato del juez actualizado (2026-09-13):** acepta `audio_base64` y el alias anterior `audio`. Los errores de `/detect` responden HTTP 200 con abstención. El modelo de 67 señales conserva el umbral **0.5**, que ya maximiza balanced accuracy en las 71 llamadas de val: **97.30%**, accuracy **97.18%**. La verificación del contrato en la URL pública con el cliente oficial está pendiente de desplegar esta corrección; las mediciones históricas siguientes no la sustituyen.
+
 **Fase 2 cerrada:** las 71 llamadas de val contra [Render](https://altur-detector.onrender.com) dieron **66/71 (92.96%)**, AUC **0.9849**, Brier **0.0453** y latencias externas **p50 586.69 ms / p95 839.89 ms**. Cero errores y probabilidades equivalentes al baseline local.
 
 **Fase 3:** se probaron cinco bloques por separado y una combinación. El artefacto seleccionado añade únicamente respuesta al silencio: **69/71 (97.18%)**, AUC **0.9905**, Brier **0.0306**, verificado por el mismo endpoint en HTTP local. Tiene 67 features: 58 originales y nueve nuevas. `artifacts/baseline_model.joblib` conserva el baseline público; `artifacts/model.joblib` contiene el seleccionado. La evaluación pública registrada corresponde al baseline, y la del seleccionado corresponde a HTTP local.
@@ -18,7 +20,7 @@ python3 -m venv .venv
 .venv/bin/python serve.py
 ```
 
-Escucha en `0.0.0.0:8000` y respeta `PORT`. `/health` devuelve los SHA-256 del modelo y del código de inferencia, el número de features y los bloques activos. Para servir otro artefacto propio:
+Escucha en `0.0.0.0:8000` y respeta `PORT`. `/health` devuelve los SHA-256 del modelo y del código de inferencia, el número de features, los bloques activos, `decision_threshold` y `contract_version: judge-audio-base64-v1`. Para servir otro artefacto propio:
 
 ```bash
 MODEL_PATH=artifacts/baseline_model.joblib .venv/bin/python serve.py
@@ -27,7 +29,7 @@ MODEL_PATH=artifacts/baseline_model.joblib .venv/bin/python serve.py
 Petición:
 
 ```json
-{"audio": "<WAV en base64>", "format": "wav"}
+{"call_id": "ejemplo", "audio_base64": "<WAV en base64>", "sample_rate": 8000, "channels": 2}
 ```
 
 Respuesta:
@@ -36,9 +38,29 @@ Respuesta:
 {"is_synthetic": true, "confidence": 0.87}
 ```
 
-`confidence` es la probabilidad de la clase devuelta. AUC/Brier usan `confidence` si el veredicto es sintético y `1-confidence` en caso contrario. Las probabilidades no se redondean; la calibración adicional sigue pendiente.
+También acepta `{"audio": "<WAV en base64>", "format": "wav"}`. Ambos campos de audio son opcionales; tiene prioridad `audio_base64` si no está vacío. `call_id`, `sample_rate`, `channels`, `format` y otros metadatos se ignoran: los parámetros de audio se leen del WAV. La respuesta contiene un booleano nativo y `confidence` entre 0 y 1, como probabilidad de la clase devuelta. AUC/Brier usan `confidence` si el veredicto es sintético y `1-confidence` en caso contrario. Las probabilidades no se redondean; la calibración adicional sigue pendiente.
 
-Mono, audio menor de 3 segundos, silencio y menos de cuatro turnos útiles devuelven `{"is_synthetic": false, "confidence": 0.5}`. A 0.5 hay abstención: el bool es un valor requerido por el contrato. WAV corrupto, frecuencia incompatible y formato distinto de estéreo PCM16 producen 422. Límites: 32 MiB y 900 segundos. El audio se procesa en memoria y no se refleja en errores.
+Audio ausente, mono, audio menor de 3 segundos, silencio, menos de cuatro turnos útiles, JSON/base64/WAV inválido, formato incompatible y cualquier excepción de `/detect` devuelven **HTTP 200** con `{"is_synthetic": false, "confidence": 0.5}`. Los límites de 32 MiB y 900 segundos también producen esa abstención. La capa exterior normaliza errores de validación, enrutamiento e inferencia antes de enviar las cabeceras. CORS permite orígenes públicos sin credenciales, incluso en las respuestas de respaldo. El audio se procesa en memoria y no se refleja en errores.
+
+## Verificar el contrato actual
+
+`scripts/check_endpoint.py` es una copia sin modificaciones del cliente oficial en `alturio/hackmty26`, commit `429adf76b15d1bd18e26b50f371ca4f13b0585c0`; SHA-256 del script: `593f78ceb80017e791f0f8d552ca6a7b3b6763c11beedfa1f68ab1a55c363364`.
+
+Con `manifest.csv` y `audio/` preparados mediante `make data`, despertar primero la instancia y ejecutar el cliente del juez:
+
+```bash
+curl --fail https://altur-detector.onrender.com/health
+python scripts/check_endpoint.py --url https://altur-detector.onrender.com/detect --split val --n 20
+```
+
+Esta ejecución pública es la puerta de aceptación del contrato. Las pruebas locales y el evaluador histórico son auxiliares. Para reproducir la selección del umbral y comprobar los bordes durante desarrollo:
+
+```bash
+.venv/bin/python tune_threshold.py
+.venv/bin/python -m unittest -v test_judge_contract
+```
+
+La selección mantiene modelo y VAD congelados, evalúa todos los cortes distintos de las probabilidades de val y conserva 0.5 si no hay mejora estricta. `reports/threshold.json` contiene todas las métricas antes/después y `artifacts/decision_policy.json` vincula el umbral al SHA-256 del modelo. Val se usa para seleccionar; el resultado no es una estimación independiente.
 
 ## Reproducir por puertas
 

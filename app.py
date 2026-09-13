@@ -4,10 +4,11 @@ import binascii
 from contextlib import asynccontextmanager
 import hashlib
 import io
+import json
+import math
 import os
 from pathlib import Path
 import struct
-from typing import Literal
 
 import joblib
 import numpy as np
@@ -15,6 +16,7 @@ import soundfile as sf
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 from threadpoolctl import threadpool_limits
 
@@ -28,6 +30,47 @@ MAX_BASE64_LENGTH = 4 * ((MAX_AUDIO_BYTES + 2) // 3)
 MAX_REQUEST_BYTES = MAX_BASE64_LENGTH + 4096
 MIN_AUDIO_SECONDS = 3.0
 ROOT = Path(__file__).resolve().parent
+
+
+def abstain():
+    return {"is_synthetic": False, "confidence": 0.5}
+
+
+class DetectAlways200:
+    """Normalize parsing, routing and response failures before sending headers."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope.get("path", "").rstrip("/") != "/detect":
+            return await self.app(scope, receive, send)
+        messages = []
+
+        async def capture(message):
+            messages.append(message)
+
+        try:
+            await self.app(scope, receive, capture)
+            start = next(m for m in messages if m["type"] == "http.response.start")
+            body = b"".join(m.get("body", b"") for m in messages if m["type"] == "http.response.body")
+            # CORS preflights can have a plain-text 200 response.
+            if scope["method"] != "OPTIONS":
+                result = json.loads(body)
+                assert type(result["is_synthetic"]) is bool
+                assert math.isfinite(result["confidence"]) and 0 <= result["confidence"] <= 1
+            assert start["status"] == 200
+        except Exception:
+            cors = {}
+            for message in messages:
+                for name, value in message.get("headers", []):
+                    if name.lower().startswith(b"access-control-") or name.lower() == b"vary":
+                        cors[name.decode("latin1")] = value.decode("latin1")
+            if not cors and any(k.lower() == b"origin" for k, _ in scope.get("headers", [])):
+                # Keep the public, credential-free CORS policy on fallback.
+                cors["Access-Control-Allow-Origin"] = "*"
+            return await JSONResponse(abstain(), status_code=200, headers=cors)(scope, receive, send)
+        for message in messages:
+            await send(message)
 
 
 class RequestBodyLimit:
@@ -46,7 +89,7 @@ class RequestBodyLimit:
             chunk = message.get("body", b"")
             size += len(chunk)
             if size > MAX_REQUEST_BYTES:
-                response = JSONResponse({"detail": "Request exceeds the audio size limit"}, 413)
+                response = JSONResponse(abstain(), status_code=200)
                 return await response(scope, receive, send)
             chunks.append(chunk)
             if not message.get("more_body", False):
@@ -77,43 +120,60 @@ async def lifespan(app):
         raise RuntimeError("Model requires unsupported behavior blocks")
     app.state.bundle = bundle
     app.state.model_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    threshold = float(bundle["decision_threshold"])
+    policy_path = ROOT / "artifacts/decision_policy.json"
+    if policy_path.exists():
+        policy = json.loads(policy_path.read_text())
+        if policy["model_sha256"] == app.state.model_sha256:
+            threshold = float(policy["threshold"])
+    if not math.isfinite(threshold) or not 0 <= threshold <= 1:
+        raise RuntimeError("Invalid decision threshold")
+    app.state.decision_threshold = threshold
     app.state.pipeline_sha256 = pipeline_fingerprint(model_path=path)
     with threadpool_limits(limits=1):
         bundle["model"].predict_proba(np.zeros((1, len(bundle["feats"]))))
         yield
 
 
-app = FastAPI(title="Altur · Detector conversacional", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Altur · Detector conversacional", version="0.4.0", lifespan=lifespan)
 app.add_middleware(RequestBodyLimit)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
+                   allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(DetectAlways200)
 
 
 class DetectRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    audio: str = Field(max_length=MAX_BASE64_LENGTH, description="Base64 WAV, stereo PCM16, 8 kHz")
-    format: Literal["wav"] = "wav"
+    # call_id, sample_rate, channels, format and other metadata are ignored.
+    model_config = ConfigDict(extra="ignore")
+    audio_base64: str | None = Field(default=None, max_length=MAX_BASE64_LENGTH)
+    audio: str | None = Field(default=None, max_length=MAX_BASE64_LENGTH)
 
 
 class DetectResponse(BaseModel):
     is_synthetic: bool
-    confidence: float = Field(ge=0.5, le=1.0, description="Probability of the returned class; 0.5 is abstention")
+    confidence: float = Field(ge=0.0, le=1.0, description="Probability of the returned class; 0.5 is abstention")
 
 
 @app.exception_handler(RequestValidationError)
 async def invalid_request(request: Request, exc: RequestValidationError):
-    # Pydantic's default response can echo the submitted audio. Omit all input.
-    errors = [{"loc": list(e["loc"]), "type": e["type"], "msg": e["msg"]} for e in exc.errors()]
-    return JSONResponse(status_code=422, content={"detail": errors})
+    return JSONResponse(abstain(), status_code=200)
 
 
-def abstain():
-    # The contract requires a bool. False is only a placeholder at confidence 0.5.
-    return {"is_synthetic": False, "confidence": 0.5}
-
-
+@app.post("/detect/", response_model=DetectResponse, include_in_schema=False)
 @app.post("/detect", response_model=DetectResponse)
 def detect(req: DetectRequest):
     try:
-        raw = base64.b64decode(req.audio, validate=True)
+        audio = req.audio_base64 or req.audio
+        if not audio:
+            return abstain()
+        return classify(audio)
+    except Exception:
+        return abstain()
+
+
+def classify(audio):
+    try:
+        raw = base64.b64decode(audio, validate=True)
     except (binascii.Error, ValueError):
         raise HTTPException(422, "audio must be valid base64") from None
     if len(raw) > MAX_AUDIO_BYTES:
@@ -151,7 +211,9 @@ def detect(req: DetectRequest):
         return abstain()
     row = np.asarray([[features.get(name, np.nan) for name in bundle["feats"]]], dtype=float)
     p = float(bundle["model"].predict_proba(row)[0, 1])
-    is_synthetic = p > bundle["decision_threshold"]
+    if not math.isfinite(p) or not 0 <= p <= 1:
+        return abstain()
+    is_synthetic = bool(p > app.state.decision_threshold)
     # Preserve full precision so HTTP AUC/Brier reproduce the offline evaluation.
     return {"is_synthetic": bool(is_synthetic), "confidence": p if is_synthetic else 1 - p}
 
@@ -161,4 +223,7 @@ def health():
     return {"ok": True, "model_sha256": app.state.model_sha256,
             "pipeline_sha256": app.state.pipeline_sha256,
             "features": len(app.state.bundle["feats"]),
-            "feature_blocks": app.state.bundle.get("feature_blocks", [])}
+            "feature_blocks": app.state.bundle.get("feature_blocks", []),
+            "decision_threshold": app.state.decision_threshold,
+            "contract_version": "judge-audio-base64-v1",
+            "audio_fields": ["audio_base64", "audio"], "detect_error_status": 200}

@@ -1,6 +1,25 @@
 # RESULTS — Altur HackMTY 2026
 
-## Estado y métricas
+## Corrección urgente del contrato del juez — 2026-09-13
+
+El cliente oficial actual envía `audio_base64`, `call_id`, `sample_rate` y `channels`. Se añadió compatibilidad con ese contrato y con `audio`; metadatos opcionales ignorados, respuestas de respaldo HTTP 200, booleano nativo y CORS en respuestas normales y de error. Se probaron errores de JSON/base64/WAV, campos ausentes, excepciones de inferencia, límite del cuerpo y preflight. Son comprobaciones de desarrollo; la puerta válida sigue siendo el cliente oficial contra Render.
+
+**Despliegue y verificación pública del contrato nuevo: pendientes.** No se presenta la evaluación histórica del formato `audio` como validación del cliente actual. Falta registrar la salida completa del cliente y la latencia pública del WAV más largo del dataset, de **273.0 segundos**.
+
+### Umbral para balanced accuracy
+
+Se recalcularon las probabilidades de las 71 llamadas de val desde sus WAV y turnos VAD, sin reentrenar el modelo de 67 señales ni modificar el VAD. Se evaluaron todos los cortes de decisión distintos, además de 0, 0.5 y 1; en empates se conserva el umbral más cercano a 0.5. Positivo = sintético; regla `P(synthetic) > threshold`.
+
+| Estado | Umbral | Balanced accuracy | Accuracy | Humanos correctos | Sintéticos correctos | AUC | Brier |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Antes | 0.5 | 97.30% | 97.18% (69/71) | 35/37 | 34/34 | 0.990461 | 0.030627 |
+| Después de buscar el óptimo | 0.5 | 97.30% | 97.18% (69/71) | 35/37 | 34/34 | 0.990461 | 0.030627 |
+
+**No se cambia el umbral:** 0.5 ya alcanza el máximo de balanced accuracy. Evidencia reproducible: `python tune_threshold.py`, `reports/threshold.json` y `artifacts/decision_policy.json`. El SHA-256 del modelo se conserva: `3e2de98c6a780225e2a387ffd2fc3c35cba2132a873fc54b2fecc615d6bbb384`. Buscar el umbral sobre val es selección sobre ese conjunto, no validación independiente.
+
+Cliente oficial conservado sin cambios en `scripts/check_endpoint.py`, fuente `alturio/hackmty26` commit `429adf76b15d1bd18e26b50f371ca4f13b0585c0`, SHA-256 `593f78ceb80017e791f0f8d552ca6a7b3b6763c11beedfa1f68ab1a55c363364`.
+
+## Estado y métricas históricas
 
 Fase 1 aprobada. Fase 2 **CERRADA**: las 71 llamadas evaluadas contra Render reproducen el baseline local.
 Docker está aplazado por indicación del usuario. Fase 3: Completada: bloques y combinaciones medidos por HTTP. Selección: silence_recovery.

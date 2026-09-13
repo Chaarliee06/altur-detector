@@ -66,7 +66,7 @@ def evaluate_http(url, data_dir=Path("."), output=Path("reports/phase2_http.json
             result = response.json()
             assert type(result["is_synthetic"]) is bool
             confidence = float(result["confidence"])
-            assert np.isfinite(confidence) and 0.5 <= confidence <= 1.0
+            assert np.isfinite(confidence) and 0.0 <= confidence <= 1.0
             probability = confidence if result["is_synthetic"] else 1 - confidence
             rows.append({"anon_id": item.anon_id, "label": item.label,
                          "is_synthetic": result["is_synthetic"], "confidence": confidence,

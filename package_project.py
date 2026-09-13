@@ -12,6 +12,7 @@ ROOT_FILES = [
     "evaluate_http.py", "check_endpoint.py", "verify_local.py", "verify_docker.py",
     "verify_public.py", "prepare_data.py", "write_results.py", "package_project.py",
     "behavior_features.py", "phase3.py", "stress_latency.py", "test_behavior.py", "verify_selected.py",
+    "tune_threshold.py", "test_judge_contract.py", "scripts/check_endpoint.py",
 ]
 REPORTS = [
     "phase1.json", "phase1_preparation.json", "phase2_http.json", "phase2_edges.json",
@@ -21,6 +22,7 @@ REPORTS = [
     "phase3_final_clean_http.json", "phase3_final_edges.json", "stress_latency.json",
     "default_vad_correlations_train.csv", "vad_correlations_train.csv",
     "vad_correlations_val.csv", "vad_grid_train.csv",
+    "threshold.json", "judge_public_contract.json",
 ]
 
 
@@ -28,6 +30,7 @@ def main():
     files = [Path(name) for name in ROOT_FILES]
     files += [Path("baseline_original") / name for name in ("features.py", "vad.py", "train.py", "app.py")]
     files += [Path("artifacts/model.joblib"), Path("artifacts/baseline_model.joblib"), Path("artifacts/vad_config.json")]
+    files += [Path("artifacts/decision_policy.json")]
     files += [Path("reports") / name for name in REPORTS if (Path("reports") / name).is_file()]
     checksums = {}
     for path in files:
